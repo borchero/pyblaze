@@ -27,7 +27,7 @@ pip install pyblaze
 
 ## Quickstart
 
-An introduction to PyBlaze is given as a tutorial training an image classifier. It can be found in the documentation's [guide section](pyblaze.borchero.com/guides/supervised.html).
+An introduction to PyBlaze is given as a tutorial training an image classifier. It can be found in the documentation's [guide section](https://pyblaze.borchero.com/guides/supervised.html).
 
 ## License
 
