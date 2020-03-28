@@ -6,7 +6,7 @@ jobs:
         -   image: borchero/pyblaze:latest
         steps:
         -   checkout
-        -   run: pylint 
+        -   run: pylint pyblaze
         
     run-tests:
         docker:
