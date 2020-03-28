@@ -3,7 +3,7 @@ PyBlaze Documentation
 
 .. image:: https://img.shields.io/pypi/v/pyblaze?label=version
 
-PyBlaze is a high-level library for large-scale machine learning in `PyTorch <https://pytorch.org>`_ . It is engineered to cut obsolete boilerplate code while preserving the flexibility of PyTorch to create just about any deep learning model.
+PyBlaze is a high-level library for large-scale machine learning in `PyTorch <https://pytorch.org>`_. It is engineered to cut obsolete boilerplate code while preserving the flexibility of PyTorch to create just about any deep learning model.
 
 Installation
 ------------
