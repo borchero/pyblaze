@@ -6,6 +6,6 @@ __pycache__
 .ipynb_checkpoints
 
 # PyPi Upload
-build
+/build
 dist
 *.egg-info
