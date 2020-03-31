@@ -60,6 +60,7 @@ workflows:
     ci-workflow:
         jobs:
         -   lint-code
+        -   run-tests
 
     cd-workflow:
         jobs:
