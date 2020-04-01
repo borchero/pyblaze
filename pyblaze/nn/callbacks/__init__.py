@@ -4,4 +4,4 @@ from .logging import EpochProgressLogger, BatchProgressLogger, PredictionProgres
 from .parallel import SynchronizationCallback, ModelSharingCallback
 from .saving import ModelSaverCallback
 from .schedule import LearningRateScheduler, ParameterScheduler
-from .tracking import NeptuneTracker
+from .tracking import NeptuneTracker, TensorboardTracker
