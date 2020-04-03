@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from torch.nn.utils.rnn import PackedSequence
 
 def gpu_device(gpu):
     """
@@ -52,6 +53,8 @@ def to_device(device, *args):
         also returned as lists.
     """
     def _to_device(x):
+        if isinstance(x, PackedSequence):
+            return x.to(device, non_blocking=True)
         if x.is_sparse or x.is_contiguous():
             return x.to(device, non_blocking=True)
         return x.contiguous().to(device, non_blocking=True)
@@ -98,15 +101,10 @@ def _recursive_apply(attribute, function, *args):
         return [_recursive_apply(attribute, function, t) for t in args]
     if len(args) == 1 and isinstance(args[0], list):
         return [_recursive_apply(attribute, function, t) for t in args[0]]
-    if len(args) == 1 and isinstance(args[0], tuple):
-        return tuple(
-            [_recursive_apply(attribute, function, t) for t in args[0]]
-        )
+    if len(args) == 1 and isinstance(args[0], tuple) and not isinstance(args[0], PackedSequence):
+        return tuple([_recursive_apply(attribute, function, t) for t in args[0]])
     if len(args) == 1 and isinstance(args[0], dict):
-        return {
-            k: _recursive_apply(attribute, function, v)
-            for k, v in args[0].items()
-        }
+        return {k: _recursive_apply(attribute, function, v) for k, v in args[0].items()}
     if len(args) == 1 and hasattr(args[0], attribute):
         return function(args[0])
     if len(args) == 1 and args[0] is not None:
