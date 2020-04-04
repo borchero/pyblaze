@@ -24,7 +24,6 @@ class Estimator:
     functions therefore depend on the particular engine that is being used.
     """
 
-    # MARK: Computed Properties
     @cached_property
     def engine(self):
         """
@@ -39,7 +38,6 @@ class Estimator:
         # pylint: disable=no-member
         return type(self).__engine__(self)
 
-    # MARK: Instance Methods
     def fit(self, *args, **kwargs):
         """
         Optimizes the parameters of the model based on input and output data. The parameters are

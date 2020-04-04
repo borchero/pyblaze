@@ -12,7 +12,6 @@ class TrainingCallback(ABC):
     trainer which calls the implemented methods at specific points during training.
     """
 
-    # MARK: Instance Methods
     def before_training(self, model, num_epochs):
         """
         Method is called prior to the start of the training. This method must not raise exceptions.
@@ -73,7 +72,6 @@ class PredictionCallback(ABC):
     trainer which calls the implemented methods at specific points during inference.
     """
 
-    # MARK: Instance Methods
     def before_predictions(self, model, num_iterations):
         """
         Called before prediction making starts.

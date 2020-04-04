@@ -7,7 +7,6 @@ class SynchronizationCallback(TrainingCallback):
     training at specific points.
     """
 
-    # MARK: Initialization
     def __init__(self, push_queue, pull_queue):
         """
         Initializes a new synchronizer.
@@ -25,7 +24,6 @@ class SynchronizationCallback(TrainingCallback):
         self.push_queue = push_queue
         self.pull_queue = pull_queue
 
-    # MARK: Instance Methods
     def before_epoch(self, current, num_iterations):
         cont = self.push_queue.get()
         if not cont:

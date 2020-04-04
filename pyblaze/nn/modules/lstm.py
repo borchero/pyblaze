@@ -40,7 +40,6 @@ class StackedLSTM(nn.Module):
         self.batch_first = batch_first
         self.stacked_cell = StackedLSTMCell(input_size, hidden_sizes, bias=bias, cudnn=cudnn)
 
-    # MARK: Instance Methods
     def forward(self, inputs: torch.Tensor,
                 initial_states: Optional[List[Tuple[torch.Tensor, torch.Tensor]]] = None,
                 return_sequence: bool = True):
@@ -108,7 +107,6 @@ class StackedLSTMCell(nn.Module):
     cells: jit.Final[int]
     num_stacked: jit.Final[int]
 
-    # MARK: Initialization
     def __init__(self, input_size, hidden_sizes, bias=True, cudnn=True):
         """
         Initializes a new stacked LSTM cell.
@@ -138,7 +136,6 @@ class StackedLSTMCell(nn.Module):
             cells.append(cell_class(in_dim, out_dim, bias=bias))
         self.cells = nn.ModuleList(cells)
 
-    # MARK: Instance Methods
     # pylint: disable=arguments-differ
     def forward(self, x: torch.Tensor,
                 initial_states: Optional[List[Tuple[torch.Tensor, torch.Tensor]]] = None):
@@ -191,7 +188,6 @@ class _LSTMCell(nn.Module):
     hidden_size: jit.Final[int]
     has_bias: jit.Final[bool]
 
-    # MARK: Initialization
     def __init__(self, input_size, hidden_size, bias=True):
         super().__init__()
 
@@ -212,7 +208,6 @@ class _LSTMCell(nn.Module):
 
         self.reset_parameters()
 
-    # MARK: Instance Methods
     def reset_parameters(self):
         """
         Resets the parameters of the model.

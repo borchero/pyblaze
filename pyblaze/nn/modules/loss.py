@@ -10,7 +10,6 @@ class WeightedBCELoss(nn.Module):
     BCELoss.
     """
 
-    # MARK: Initialization
     def __init__(self, labels=None, ignore_index=None):
         """
         Initializes a new BCELoss.
@@ -36,7 +35,6 @@ class WeightedBCELoss(nn.Module):
             self.weights = None
             self.loss = nn.BCELoss()
 
-    # MARK: Instance Methods
     # pylint: disable=arguments-differ
     def forward(self, y_pred, y_true):
         if self.ignore_index is not None:

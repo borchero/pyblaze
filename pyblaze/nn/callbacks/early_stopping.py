@@ -7,9 +7,7 @@ class EarlyStopping(TrainingCallback):
     does not decrease for a specified number of epochs.
     """
 
-    # MARK: Initialization
-    def __init__(self, metric='val_loss', patience=5, restore_best=False,
-                 minimize=True):
+    def __init__(self, metric='val_loss', patience=5, restore_best=False, minimize=True):
         """
         Initializes a new early stopping callback.
 
@@ -37,7 +35,6 @@ class EarlyStopping(TrainingCallback):
         self.metric = metric
         self.minimize = minimize
 
-    # MARK: Instance Methods
     def before_training(self, model, num_epochs):
         self.model = model
         if self.restore_best:
@@ -64,7 +61,6 @@ class EarlyStopping(TrainingCallback):
         if self.restore_best and self.counter > 0:
             self.model.load_state_dict(self.state_dict)
 
-    # MARK: Private Methods
     def _is_metric_better(self, metrics):
         if self.minimize:
             return self._current_metric(metrics) < self.best_metric

@@ -12,7 +12,6 @@ class Config(ABC):
     annotations which do not define a default value are considered required.
     """
 
-    # MARK: Static Methods
     @classmethod
     def load(cls, file):
         """
@@ -53,7 +52,6 @@ class Config(ABC):
             annotations = {**annotations, **cls.__annotations__}
         return annotations
 
-    # MARK: Initialization
     def __init__(self, **kwargs):
         """
         Initializes a new config from the given parameters.
@@ -100,7 +98,6 @@ class Config(ABC):
                 f'for valid options.'
             )
 
-    # MARK: Instance Methods
     def save(self, file):
         """
         Saves the configuration to a JSON file.
@@ -130,7 +127,6 @@ class Config(ABC):
         """
         return True
 
-    # MARK: Special Methods
     def __repr__(self):
         return self._params.__repr__()
 
@@ -152,7 +148,6 @@ class Configurable(ABC):
     Only top-level modules should use this mixin to profit from saving/loading modules easily.
     """
 
-    # MARK: Static Methods
     @classmethod
     def load(cls, file):
         """
@@ -179,7 +174,6 @@ class Configurable(ABC):
         model.load_state_dict(params)
         return model
 
-    # MARK: Initialization
     def __init__(self, *args, **kwargs):
         """
         Initializes the configurable model. You can either pass an instance of the model's
@@ -212,7 +206,6 @@ class Configurable(ABC):
         else:
             self._config = type(self).__config__(**kwargs)
 
-    # MARK: Computed Properties
     @property
     def num_parameters(self):
         """
@@ -237,7 +230,6 @@ class Configurable(ABC):
         """
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
 
-    # MARK: Instance Methods
     def save(self, file):
         """
         Saves the model and its configuration to two files.
@@ -259,7 +251,6 @@ class Configurable(ABC):
         result._metadata = state_dict._metadata
         torch.save(result, f'{file}.pt')
 
-    # MARK: Special Methods
     def __getattr__(self, name):
         try:
             return super(Configurable, self).__getattr__(name)

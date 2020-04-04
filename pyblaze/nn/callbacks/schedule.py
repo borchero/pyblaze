@@ -37,7 +37,6 @@ class ParameterScheduler(TrainingCallback):
     modified and you must never pass them to the CPU.
     """
 
-    # MARK: Initialization
     def __init__(self, parameter, schedule, after_batch=False):
         """
         Initalizes a new scheduler for the given parameter.
@@ -61,7 +60,6 @@ class ParameterScheduler(TrainingCallback):
         self.epoch = None
         self.iterations = None
 
-    # MARK: Instance Methods
     def before_training(self, model, num_epochs):
         self.iterations = 0
 
@@ -79,7 +77,6 @@ class ParameterScheduler(TrainingCallback):
         self.epoch = None
         self.iterations = None
 
-    # MARK: Private Methods
     def _update(self, is_batch_update):
         if is_batch_update != self.exec_after_batch:
             return
@@ -87,5 +84,4 @@ class ParameterScheduler(TrainingCallback):
             update = self.schedule(self.parameter.item(), self.iterations)
         else:
             update = self.schedule(self.parameter.item(), self.epoch)
-        # pylint: disable=not-callable
-        self.parameter.set_(torch.tensor(update))
+        self.parameter.set_(torch.as_tensor(update))

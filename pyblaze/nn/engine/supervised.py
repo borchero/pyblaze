@@ -42,7 +42,6 @@ class SupervisedEngine(BaseEngine):
     def after_epoch(self, metrics):
         self._grad_accum_cache = {}
 
-    # MARK: Private Methods
     def train_batch(self, data, optimizer=None, loss=None, gradient_accumulation_steps=1):
         it = self._grad_accum_cache['current_iteration']
         if it == 0:

@@ -11,7 +11,6 @@ class Vectorizer:
     parallelized over multiple processes.
     """
 
-    # MARK: Initialization
     def __init__(self, worker_func, worker_init=None, callback_func=None, num_workers=-1, **kwargs):
         """
         Initializes a new vectorizer.
@@ -41,7 +40,6 @@ class Vectorizer:
         self.init_kwargs = kwargs
         self._shutdown_fn = None
 
-    # MARK: Instance Methods
     def process(self, items, *args):
         """
         Uses the vectorizer's worker function in order to process all items in parallel.
@@ -79,7 +77,6 @@ class Vectorizer:
         self._shutdown_fn = None
         return result
 
-    # MARK: Private Methods
     def _process_batches(self, items, *args):
         num_items = len(items)
 
@@ -194,7 +191,6 @@ class Vectorizer:
 
         terminate(*processes)
 
-    # MARK: Special Methods
     def __del__(self):
         if self._shutdown_fn is not None:
             self._shutdown_fn()

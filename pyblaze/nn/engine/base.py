@@ -22,7 +22,24 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
     independent, identically distributed data samples) and/or model types (e.g. GANs).
     """
 
-    # MARK: Initialization
+    #########################
+    ### ENGINE PROPERTIES ###
+    #########################
+    def supports_multiple_gpus(self):
+        """
+        Returns whether the engine allows multiple GPUs to be used during training. By default, it
+        returns `True`.
+
+        Returns
+        -------
+        bool
+            Whether multiple GPUs are allowed.
+        """
+        return True
+
+    ######################
+    ### INITIALIZATION ###
+    ######################
     def __init__(self, model):
         """
         Initializes a new engine for a specified model.
@@ -137,11 +154,7 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
             train_iterator = iter(train_data)
 
         # 1.4) GPU support
-        if gpu == 'auto':
-            if cuda.device_count() == 0:
-                gpu = False
-            else:
-                gpu = list(range(cuda.device_count()))
+        gpu = self._gpu_descriptor(gpu)
         self._setup_device(gpu)
         self.model.to(self.device)
 
@@ -187,10 +200,7 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
                     )
 
             # 2.3) Validate
-            batch_metrics = Evaluation(
-                self.collate_losses(train_losses),
-                train_batch_weights
-            )
+            batch_metrics = Evaluation(self.collate_losses(train_losses), train_batch_weights)
 
             if val_data is not None:
                 eval_val = self.evaluate(
@@ -280,12 +290,7 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
         )
 
         if gpu is not None:
-            if gpu == 'auto':
-                if cuda.device_count() > 0:
-                    gpu = list(range(cuda.device_count()))
-                else:
-                    gpu = False
-
+            gpu = self._gpu_descriptor(gpu)
             self._setup_device(gpu)
             self.model.to(self.device)
 
@@ -321,10 +326,13 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
                 return [(f'{k}_{mk}', mm.item()) for mk, mm in m.items()]
             return [(k, m.item())]
 
-        result = dict(flatten(
-            process_metric(k, f(predictions, targets))
-            for k, f in metrics.items()
-        ))
+        if targets is None:
+            result = predictions
+        else:
+            result = dict(flatten(
+                process_metric(k, f(predictions, targets))
+                for k, f in metrics.items()
+            ))
 
         if gpu is not None:
             self.model.to('cpu', non_blocking=True)
@@ -365,11 +373,7 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
             callbacks = []
 
         # 1) Set gpu if all is specified
-        if gpu == 'auto':
-            if cuda.device_count() > 0:
-                gpu = list(range(cuda.device_count()))
-            else:
-                gpu = False
+        gpu = self._gpu_descriptor(gpu)
 
         # 2) Setup data loading
         num_iterations = iterations or len(data)
@@ -579,7 +583,16 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
             return self.model(**x)
         return self.model(x)
 
-    # MARK: Private Methods
+    def _gpu_descriptor(self, gpu):
+        if gpu == 'auto':
+            if cuda.device_count() == 0:
+                return False
+            elif self.supports_multiple_gpus():
+                return list(range(cuda.device_count()))
+            else:
+                return True
+        return gpu
+
     def _setup_device(self, gpu):
         if isinstance(gpu, list) and len(gpu) > 1:
             self.model = xnnu.DataParallel(self.model, device_ids=gpu)

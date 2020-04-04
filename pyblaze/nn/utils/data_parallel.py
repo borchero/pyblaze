@@ -7,14 +7,12 @@ class DataParallel(nn.DataParallel):
     also returned being wrapped as DataParallel. Call `.module` to access the raw model.
     """
 
-    # MARK: Initialization
     def __init__(self, model, device_ids=None, output_device=None, dim=0):
         super(DataParallel, self).__init__(
             model, device_ids, output_device, dim
         )
         self._cache = {}
 
-    # MARK: Special Methods
     def __getattr__(self, name):
         try:
             return super(DataParallel, self).__getattr__(name)

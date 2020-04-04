@@ -17,7 +17,6 @@ class ProgressBar:
     for-loop.
     """
 
-    # MARK: Static Methods
     @staticmethod
     def frac(num, denom):
         """
@@ -37,7 +36,6 @@ class ProgressBar:
         """
         return ProgressBar(int(np.ceil(num / denom)))
 
-    # MARK: Initialization
     def __init__(self, total, file=None, verbose=True):
         """
         Initializes a new progress bar with the given number of work items.
@@ -64,7 +62,6 @@ class ProgressBar:
         else:
             self.stream = sys.stdout
 
-    # MARK: Instance Methods
     def start(self):
         """
         Starts to record the progress of the operation. Time measuring is initiated and the
@@ -110,7 +107,6 @@ class ProgressBar:
         self._print_done(metrics)
         self.tic = None
 
-    # MARK: Special Methods
     def __enter__(self):
         self.start()
         return self
@@ -137,7 +133,6 @@ class ProgressBar:
         self.finish()
         raise StopIteration
 
-    # MARK: Private Methods
     def _print_progress(self, compute_eta=True):
         if not self.verbose:
             return
@@ -179,7 +174,6 @@ class ProgressBar:
         print(f"{_ERASE_LINE}{print_text}", file=self.stream)
         self.stream.flush()
 
-    # MARK: Special Methods
     def __del__(self):
         if self.stream != sys.stdout:
             self.stream.close()

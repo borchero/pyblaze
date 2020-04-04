@@ -7,7 +7,6 @@ class EpochProgressLogger(TrainingCallback):
     within an epoch, use `BatchProgressLogger`).
     """
 
-    # MARK: Initialization
     def __init__(self, file=None):
         """
         Initializes a new progress printer for epochs.
@@ -21,7 +20,6 @@ class EpochProgressLogger(TrainingCallback):
         self.progress = None
         self.file = file
 
-    # MARK: Instance Methods
     def before_training(self, model, num_epochs):
         self.progress = ProgressBar(num_epochs, self.file)
         self.progress.start()
@@ -40,7 +38,6 @@ class BatchProgressLogger(TrainingCallback):
     training, use `EpochProgressLogger`).
     """
 
-    # MARK: Initialization
     def __init__(self, file=None):
         """
         Initializes a new progress logger for batches.
@@ -55,7 +52,6 @@ class BatchProgressLogger(TrainingCallback):
         self.progress = None
         self.file = file
 
-    # MARK: Instance Methods
     def before_training(self, model, num_epochs):
         self.num_epochs = num_epochs
 
@@ -80,7 +76,6 @@ class PredictionProgressLogger(PredictionCallback):
     Logs the prediction progress.
     """
 
-    # MARK: Initialization
     def __init__(self, file=None):
         """
         Initializes a new progress printer for predictions.
@@ -94,7 +89,6 @@ class PredictionProgressLogger(PredictionCallback):
         self.progress = None
         self.file = file
 
-    # MARK: Instance Methods
     def before_predictions(self, model, num_iterations):
         self.progress = ProgressBar(num_iterations, self.file)
         self.progress.start()

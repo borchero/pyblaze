@@ -11,7 +11,6 @@ class ModelSaverCallback(TrainingCallback):
     every epoch, otherwise only its state dict.
     """
 
-    # MARK: Initialization
     def __init__(self, directory, file_template='model_epoch-{}'):
         """
         Initializes a new ModelSaverCallback.
@@ -27,7 +26,6 @@ class ModelSaverCallback(TrainingCallback):
         self.model = None
         self.epoch = None
 
-    # MARK: Instance Methods
     def before_training(self, model, num_epochs):
         self.model = model
 

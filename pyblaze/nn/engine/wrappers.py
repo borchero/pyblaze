@@ -7,7 +7,6 @@ class History:
     This class summarizes metrics obtained during training of a model.
     """
 
-    # MARK: Static Methods
     @staticmethod
     def load(file):
         """
@@ -45,7 +44,6 @@ class History:
             hist1._metrics + hist2._metrics
         )
 
-    # MARK: Initialization
     def __init__(self, duration, metrics):
         """
         Initializes a new history object.
@@ -58,7 +56,6 @@ class History:
         self.duration = duration
         self._metrics = metrics
 
-    # MARK: Instance Methods
     @property
     def keys(self):
         """
@@ -84,7 +81,6 @@ class History:
         with open(file, 'w+') as f:
             json.dump(obj, f, indent=4, sort_keys=True)
 
-    # MARK: Special Methods
     def __len__(self):
         return len(self._metrics)
 
@@ -108,7 +104,6 @@ class Evaluation:
     This class summarizes metrics obtained when evaluating a model.
     """
 
-    # MARK: Static Methods
     @staticmethod
     def merge(eval1, eval2, *eval_other):
         """
@@ -137,14 +132,13 @@ class Evaluation:
         result._metrics = metrics
         return result
 
-    # MARK: Initialization
     def __init__(self, metrics, weights=None):
         """
         Initializes a new evaluation wrapper from the given metrics.
 
         Parameters
         ----------
-        metrics: dict of str -> list of float
+        metrics: dict of str -> (list of float or float)
             The metrics computed. The keys define the metric names, the values provide the metrics
             computed over all batches.
         weights: list of int, default: None
@@ -154,7 +148,9 @@ class Evaluation:
         """
         result = {}
         for metric, values in metrics.items():
-            if weights is None or len(weights) == 0:
+            if isinstance(values, float):
+                average = values
+            elif weights is None or len(weights) == 0:
                 average = np.mean(values)
             else:
                 weights = np.array(weights)
@@ -163,7 +159,6 @@ class Evaluation:
             result[metric] = average
         self._metrics = result
 
-    # MARK: Instance Methods
     @property
     def keys(self):
         """
@@ -207,7 +202,6 @@ class Evaluation:
         result._metrics = {f'{prefix}{k}': v for k, v in self._metrics.items()}
         return result
 
-    # MARK: Special Methods
     def __contains__(self, item):
         return item in self._metrics
 
