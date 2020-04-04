@@ -587,10 +587,9 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
         if gpu == 'auto':
             if cuda.device_count() == 0:
                 return False
-            elif self.supports_multiple_gpus():
+            if self.supports_multiple_gpus():
                 return list(range(cuda.device_count()))
-            else:
-                return True
+            return True
         return gpu
 
     def _setup_device(self, gpu):
