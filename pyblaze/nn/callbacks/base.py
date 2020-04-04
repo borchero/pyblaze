@@ -10,6 +10,9 @@ class CallbackException(Exception):
         self.verbose = verbose
 
     def print(self):
+        """
+        Prints the message of this exception if it is verbose. Otherwise it is a no-op.
+        """
         if self.verbose:
             print(self)
 
