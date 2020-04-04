@@ -245,7 +245,10 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
             train_callbacks, 'after_training'
         )
         if exception is not None:
-            print(exception)
+            if isinstance(exception, CallbackException):
+                exception.print()
+            else:
+                print(exception)
 
         return History(time.time() - tic, metric_history)
 

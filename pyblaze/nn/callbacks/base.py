@@ -5,6 +5,14 @@ class CallbackException(Exception):
     Exception raised by callbacks to stop the training procedure.
     """
 
+    def __init__(self, message, verbose=False):
+        super().__init__(message)
+        self.verbose = verbose
+
+    def print(self):
+        if self.verbose:
+            print(self)
+
 
 class TrainingCallback(ABC):
     """

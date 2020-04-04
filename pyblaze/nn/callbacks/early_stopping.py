@@ -54,7 +54,8 @@ class EarlyStopping(TrainingCallback):
             self.counter += 1
             if self.counter == self.patience:
                 raise CallbackException(
-                    f"Early stopping after epoch {self.epoch} (patience {self.patience})."
+                    f"Early stopping after epoch {self.epoch} (patience {self.patience}).",
+                    verbose=True
                 )
 
     def after_training(self):
