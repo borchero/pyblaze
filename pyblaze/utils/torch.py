@@ -20,10 +20,10 @@ def gpu_device(gpu):
     """
     if isinstance(gpu, bool) and gpu:
         assert torch.cuda.is_available()
-        gpu = np.argmin([
+        gpu = int(np.argmin([
             torch.cuda.memory_cached(torch.device('cuda', i))
             for i in range(torch.cuda.device_count())
-        ])
+        ]))
         return torch.device('cuda', gpu)
 
     if isinstance(gpu, bool):
