@@ -43,18 +43,67 @@ class Estimator:
         Optimizes the parameters of the model based on input and output data. The parameters are
         passed to the `train` method of the model's engine.
         """
-        return self.engine.train(*args, **kwargs)
+        assert len(args) > 0 or 'data' in kwargs, \
+            "Data must be given as keyword argument or first parameter."
+
+        if len(args) > 0:
+            data = self.prepare_input(args[0])
+            args = args[1:]
+        else:
+            data = self.prepare_input(kwargs['data'])
+            del kwargs['data']
+
+        return self.engine.train(data, *args, **kwargs)
 
     def evaluate(self, *args, **kwargs):
         """
         Estimates the performance of the model by returning some metric based on input and output
         data. The parameters are passed to the `evaluate` method of the model's engine.
         """
-        return self.engine.evaluate(*args, **kwargs)
+        assert len(args) > 0 or 'data' in kwargs, \
+            "Data must be given as keyword argument or first parameter."
+
+        if len(args) > 0:
+            data = self.prepare_input(args[0])
+            args = args[1:]
+        else:
+            data = self.prepare_input(kwargs['data'])
+            del kwargs['data']
+
+        return self.engine.evaluate(data, *args, **kwargs)
 
     def predict(self, *args, **kwargs):
         """
         Performs inference based on some input data. The parameters are passed to the `predict`
         method of the model's engine.
         """
-        return self.engine.predict(*args, **kwargs)
+        assert len(args) > 0 or 'data' in kwargs, \
+            "Data must be given as keyword argument or first parameter."
+
+        if len(args) > 0:
+            data = self.prepare_input(args[0])
+            args = args[1:]
+        else:
+            data = self.prepare_input(kwargs['data'])
+            del kwargs['data']
+
+        return self.engine.predict(data, *args, **kwargs)
+
+    def prepare_input(self, data):
+        """
+        Prepares the input for the engine. This enables passing other types of data instead of
+        PyTorch data loaders when it is appropriate, making it easier to e.g. provide a Sklearn-
+        like interface. By default, the data object is simply returned but subclasses may override
+        this function as appropriate.
+
+        Parameters
+        ----------
+        data: object
+            The data object passed to `fit`, `evaluate` or `predict`.
+
+        Returns
+        -------
+        iterable
+            The iterable dataset to use for the engine's data.
+        """
+        return data
