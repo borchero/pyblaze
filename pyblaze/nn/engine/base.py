@@ -343,7 +343,7 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
 
         return Evaluation(result)
 
-    def predict(self, data, iterations=None, callbacks=None, gpu='auto', **kwargs):
+    def predict(self, data, iterations=None, callbacks=None, gpu='auto', parallel=True, **kwargs):
         """
         Computes predictions for the given samples.
 
@@ -364,6 +364,10 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
             multiple GPUs makes up for this overhead. If `False` is specified, all cores of the
             computer are used to make predictions in parallel. In the case of 'auto', all available
             GPUs are used (if any).
+        parallel: bool, default: True
+            Whether to allow predictions to be done in parallel. Normally, you do not need to set
+            this to `False`, unless there is some good reason (e.g. running in a Docker container
+            that does not provide sufficient shared memory).
         kwargs: keyword arguments
             Additional arguments passed directly to the `predict_batch` function.
 
@@ -394,12 +398,14 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
         # 4) Now perform predictions
         if (isinstance(gpu, list) and len(gpu) > 1) or not gpu:
             # parallel computation
-            if isinstance(gpu, list):
+            if parallel and isinstance(gpu, list):
                 num_workers = len(gpu)
-            elif isinstance(gpu, bool):
-                num_workers = os.cpu_count()
+            elif parallel and isinstance(gpu, bool):
+                # number of CPU cores
+                num_workers = -1
             else:
-                num_workers = 1
+                # execute on main thread otherwise
+                num_workers = 0
 
             model.share_memory()
 
