@@ -57,9 +57,8 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
     ### HIGH-LEVEL METHODS ###
     ##########################
     # pylint: disable=too-many-branches,too-many-statements
-    def train(self, train_data, val_data=None, epochs=20, val_iterations=None,
-              eval_every=None, eval_train=False, eval_val=True, callbacks=None,
-              metrics=None, gpu='auto', **kwargs):
+    def train(self, train_data, val_data=None, epochs=20, val_iterations=None, eval_every=None,
+              eval_train=False, eval_val=True, callbacks=None, metrics=None, gpu='auto', **kwargs):
         """
         Method for training the model with the supplied parameters.
 
@@ -105,7 +104,8 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
             accordingly. If set to a string, the only valid value is 'auto'. In this case, all
             available GPUs are used.
         kwargs: keyword arguments
-            Additional keyword arguments dependent on the specific subclass.
+            Additional keyword arguments dependent on the specific subclass. If prefixed with
+            'eval_', it will be passed to `eval_batch`, otherwise to `train_batch`.
 
         Returns
         -------
@@ -157,6 +157,10 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
         self._setup_device(gpu)
         self.model.to(self.device)
 
+        # 1.5) Valid kwargs
+        train_kwargs = {k: v for k, v in kwargs.items() if not k.startswith('eval_')}
+        eval_kwargs = {k: v for k, v in kwargs.items() if k.startswith('eval_')}
+
         # 2) Train for number of epochs
         for current_epoch in range(epochs):
             # 2.1) Prepare
@@ -182,7 +186,7 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
                 for _ in range(eval_every):
                     item = next(train_iterator)
                     item = to_device(self.device, item)
-                    loss = self.train_batch(item, **kwargs)
+                    loss = self.train_batch(item, **train_kwargs)
                     train_losses.append(loss)
                     self._exec_callbacks(
                         train_callbacks, 'after_batch', loss
@@ -191,7 +195,7 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
                 # 2.2.2) Dataset
                 for item in train_data:
                     item = to_device(self.device, item)
-                    loss = self.train_batch(item, **kwargs)
+                    loss = self.train_batch(item, **train_kwargs)
                     train_batch_weights.append(len(item))
                     train_losses.append(loss)
                     self._exec_callbacks(
@@ -204,14 +208,14 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
             if val_data is not None:
                 eval_val = self.evaluate(
                     val_data, iterations=val_iterations, metrics=val_metrics,
-                    callbacks=prediction_callbacks, gpu=None
+                    callbacks=prediction_callbacks, gpu=None, **eval_kwargs
                 ).with_prefix('val_')
                 batch_metrics = Evaluation.merge(batch_metrics, eval_val)
 
             if eval_train:
                 eval_train = self.evaluate(
                     train_data, iterations=val_iterations, metrics=metrics,
-                    callbacks=prediction_callbacks, gpu=None
+                    callbacks=prediction_callbacks, gpu=None, **eval_kwargs
                 ).with_prefix('train_')
                 batch_metrics = Evaluation.merge(batch_metrics, eval_train)
 
@@ -251,7 +255,7 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
 
         return History(time.time() - tic, metric_history)
 
-    def evaluate(self, data, iterations=None, metrics=None, callbacks=None, gpu='auto'):
+    def evaluate(self, data, iterations=None, metrics=None, callbacks=None, gpu='auto', **kwargs):
         """
         Evaluates the model on the given data and computes the supplied metrics.
 
@@ -275,6 +279,8 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
             simultaneously. In this case, the batch sizes of the data loaders should be adjusted
             accordingly. If set to 'auto', all available GPUs are used. In case of `None`, the
             model will not be moved. Only use this option if you know what you are doing.
+        kwargs: keyword arguments
+            Additional arguments, passed directly to the `eval_batch` method.
 
         Returns
         -------
@@ -307,7 +313,7 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
             item = to_device(self.device, item)
 
             with torch.no_grad():
-                prediction, target = self.eval_batch(item)
+                prediction, target = self.eval_batch(item, **kwargs)
 
             predictions.append(to_device('cpu', prediction))
             targets.append(to_device('cpu', target))
