@@ -105,7 +105,8 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
             available GPUs are used.
         kwargs: keyword arguments
             Additional keyword arguments dependent on the specific subclass. If prefixed with
-            'eval_', it will be passed to `eval_batch`, otherwise to `train_batch`.
+            'eval_', it will be passed to `eval_batch` (without the prefix), otherwise to
+            `train_batch`.
 
         Returns
         -------
@@ -159,7 +160,7 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
 
         # 1.5) Valid kwargs
         train_kwargs = {k: v for k, v in kwargs.items() if not k.startswith('eval_')}
-        eval_kwargs = {k: v for k, v in kwargs.items() if k.startswith('eval_')}
+        eval_kwargs = {k[5:]: v for k, v in kwargs.items() if k.startswith('eval_')}
 
         # 2) Train for number of epochs
         for current_epoch in range(epochs):
