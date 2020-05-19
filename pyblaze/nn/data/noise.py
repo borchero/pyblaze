@@ -1,35 +1,26 @@
+import torch
+import torch.distributions as D
 from torch.utils.data import IterableDataset
-import pyblaze.nn.functional as X
 
 # pylint: disable=abstract-method
 class NoiseDataset(IterableDataset):
     """
-    Infinite dataset for generating noise from a given probability distribution. Can e.g. be used
-    with Generative Adversarial Networks.
+    Infinite dataset for generating noise from a given probability distribution. Usually to be used
+    with generative adversarial netwroks.
     """
 
-    def __init__(self, noise_type, dimension):
+    def __init__(self, distribution=D.Normal(torch.zeros(2), torch.ones(2))):
         """
-        Initializes a new dataset with the given noise type.
+        Initializes a new dataset where noise is sampled from the given distribution.
 
         Parameters
         ----------
-        noise_type: str
+        distribution: torch.distributions.Distribution
             The noise type to use.
-        dimension: int
-            The dimension of the noise to generate.
         """
         super().__init__()
-
-        self.noise_type = noise_type
-        self.dimension = dimension
+        self.distribution = distribution
 
     def __iter__(self):
-        # We do not need to consider single- or multi-process data loading since
-        # the noise is randomly sampled anyway
-        return self._generator_func(self.noise_type, self.dimension)
-
-    def _generator_func(self, noise_type, dimension):
         while True:
-            yield X.generate_noise([dimension], noise_type)
-            
+            yield self.distribution.sample()

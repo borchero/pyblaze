@@ -3,7 +3,7 @@ PyBlaze Documentation
 
 .. image:: https://img.shields.io/pypi/v/pyblaze?label=version
 
-PyBlaze is a high-level library for large-scale machine learning in `PyTorch <https://pytorch.org>`_. It is engineered to cut obsolete boilerplate code while preserving the flexibility of PyTorch to create just about any deep learning model.
+`PyBlaze <https://github.com/borchero/pyblaze>`_ is a high-level library for large-scale machine learning in `PyTorch <https://pytorch.org>`_. It is engineered to cut obsolete boilerplate code while preserving the flexibility of PyTorch to create just about any deep learning model.
 
 Installation
 ------------
@@ -17,7 +17,7 @@ PyBlaze is available on PyPi and can simply be installed as follows:
    :maxdepth: 2
    :caption: Guides
 
-   guides/supervised
+   guides/classifier
    guides/multiprocessing
 
 .. toctree::
@@ -35,5 +35,3 @@ Indices and Tables
 
 * :ref:`genindex`
 * :ref:`modindex`
-
-`View on GitHub <https://github.com/borchero/pyblaze>`_

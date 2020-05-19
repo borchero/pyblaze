@@ -9,8 +9,9 @@ import pyblaze.nn.utils as xnnu
 from pyblaze.utils.torch import gpu_device, to_device
 from pyblaze.utils.stdlib import flatten
 from .wrappers import History, Evaluation
+from .utils import forward
 
-class BaseEngine(TrainingCallback, PredictionCallback, ABC):
+class Engine(TrainingCallback, PredictionCallback, ABC):
     """
     A base class for training and evaluating models as well as making predictions. Generally, this
     class should be seen as _binding_ between a model and some data. Models should always be
@@ -66,7 +67,7 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
         ----------
         train_data: torch.DataLoader
             A data loader to obtain training data from. The samples yielded by the data loader
-            depend on a specific trainer implementation.
+            depend on a specific engine implementation.
         val_data: torch.DataLoader, default: None
             A data loader to use for validation. If the loader is an infinite data loader,
             `val_iterations` must also be given. If not supplied, no validation will be performed.
@@ -264,7 +265,7 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
         ----------
         data: torch.DataLoader
             A data loader to obtain evaluation samples from. The expected samples depend on a
-            specific trainer subclass.
+            specific engine subclass.
         iterations: int, default: None
             The number of samples used for evaluating if the given data is an infinite data loader.
         metrics: dict of str -> func, default: {}
@@ -518,7 +519,7 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
         object
             The return value passed to `collate_predictions`.
         """
-        return self.forward(data)
+        return forward(self.model, data)
 
     ###########################
     ### COLLATION FUNCTIONS ###
@@ -578,26 +579,6 @@ class BaseEngine(TrainingCallback, PredictionCallback, ABC):
     ######################
     ### BASE FUNCTIONS ###
     ######################
-    def forward(self, x):
-        """
-        Computes the model output for common types of inputs.
-
-        Parameters
-        ----------
-        x: list or tuple or dict or object
-            The input the model.
-
-        Returns
-        -------
-        object
-            The output of the model (although arbitrary, it is usually a torch.Tensor).
-        """
-        if isinstance(x, (list, tuple)):
-            return self.model(*x)
-        if isinstance(x, dict):
-            return self.model(**x)
-        return self.model(x)
-
     def _gpu_descriptor(self, gpu):
         if gpu == 'auto':
             if cuda.device_count() == 0:

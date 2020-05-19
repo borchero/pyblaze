@@ -1,28 +1,36 @@
-from .base import BaseEngine
+from .base import Engine
+from .utils import forward
 
-class SupervisedEngine(BaseEngine):
+class LabelEngine(Engine):
     """
-    Trainer to be used in a supervised learning setting.
+    Engine to be used in a supervised learning setting where labels for the data are available.
 
-    A dataset supplied to the `train` or `evaluate` method must supply tuples with the following
-    items:
 
-    - x: input to the model
-    - y: correct output
+    The engine requires data to be available in the following format:
 
-    For the `predict` method, the data must be supplied as follows:
+    Parameters
+    ----------
+    x: object
+        The input to the model. The type depends on the model. Usually, however, it is a tensor of
+        shape [N, ...] for batch size N. This value is always required.
+    y: object
+        The labels corresponding to the input. The type depends on the model. Usually, it is set to
+        the class indices (for classification) or the target values (for regression) and therefore
+        given as tensor of shape [N]. This value must not be given if :meth:`predict` is called.
 
-    - x: input to the model
 
-    Further, the `train` method requires the following parameters:
+    For the :meth:`train` method allows for the following keyword arguments:
 
+    Parameters
+    ----------
     optimizer: torch.optim.Optimizer
-        The optimizer to use for optimizing the model's weights.
-    loss: func (torch.Tensor, torch.Tensor) -> float
-        The loss function to use.
+        The optimizer to use for the model.
+    loss: torch.nn.Module
+        The loss function to use. It receives two inputs: the output of the model and the target
+        values. Usually, they are given as `(torch.Tensor [N], torch.Tensor [N])` for batch size N.
     gradient_accumulation_steps: int, default: 1
         The number of batches which should be used for a single update step. Gradient accumulation
-        can be useful if your GPU can only fit a small batch size but model convergence is hindered
+        can be useful if the GPU can only fit a small batch size but model convergence is hindered
         by that.
     """
 
@@ -49,7 +57,8 @@ class SupervisedEngine(BaseEngine):
 
         loss_func = loss
 
-        y_pred, y_true = self.eval_batch(data)
+        x, y_true = data
+        y_pred = forward(self.model, x)
         loss = loss_func(y_pred, y_true) / gradient_accumulation_steps
 
         loss.backward()
@@ -63,5 +72,5 @@ class SupervisedEngine(BaseEngine):
 
     def eval_batch(self, data):
         x, y_true = data
-        y_pred = self.forward(x)
+        y_pred = forward(self.model, x)
         return y_pred, y_true

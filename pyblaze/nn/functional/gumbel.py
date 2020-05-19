@@ -9,12 +9,12 @@ def gumbel_softmax(logits: torch.Tensor,
                    eps: float = 1e-10,
                    dim: int = -1):
     """
-    Numerically stable version of PyTorch's builtin gumbel softmax.
+    Numerically stable version of PyTorch's builtin Gumbel softmax.
 
     Parameters
     ----------
     logits: torch.Tensor
-        The values fed into the gumbel softmax.
+        The values fed into the Gumbel softmax.
     tau: float, default: 1
         Temperature parameter for the Gumbel distribution.
     hard: bool, default: False

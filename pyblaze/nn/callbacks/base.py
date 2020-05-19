@@ -19,8 +19,8 @@ class CallbackException(Exception):
 
 class TrainingCallback(ABC):
     """
-    Abstract class to be subclassed by all training callbacks. These callbacks are passed to a
-    trainer which calls the implemented methods at specific points during training.
+    Abstract class to be subclassed by all training callbacks. These callbacks are passed to an
+    engine which calls the implemented methods at specific points during training.
     """
 
     def before_training(self, model, num_epochs):
@@ -79,8 +79,8 @@ class TrainingCallback(ABC):
 
 class PredictionCallback(ABC):
     """
-    Abstract class to be subclassed by all prediction callbacks. These callbacks are passed to a
-    trainer which calls the implemented methods at specific points during inference.
+    Abstract class to be subclassed by all prediction callbacks. These callbacks are passed to an
+    engine which calls the implemented methods at specific points during inference.
     """
 
     def before_predictions(self, model, num_iterations):

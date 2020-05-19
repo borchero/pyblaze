@@ -4,7 +4,24 @@ Neural Network Training
 Data
 ----
 
+Noise
+^^^^^
+
 .. automodule:: pyblaze.nn.data.noise
+    :members:
+    :inherited-members:
+
+Zipping
+^^^^^^^
+
+.. automodule:: pyblaze.nn.data.zip
+    :members:
+    :inherited-members:
+
+Extensions
+^^^^^^^^^^
+
+.. automodule:: pyblaze.nn.data.extensions
     :members:
     :inherited-members:
 
@@ -17,12 +34,26 @@ Base
 .. automodule:: pyblaze.nn.engine.base
     :members:
 
-Implementation
-^^^^^^^^^^^^^^
+Supervised Learning
+^^^^^^^^^^^^^^^^^^^
 
-.. automodule:: pyblaze.nn.engine.supervised
+.. automodule:: pyblaze.nn.engine.label
     :members:
     :exclude-members: __init__, after_batch, after_epoch, before_epoch, eval_batch, train_batch
+
+Variational Autoencoders
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: pyblaze.nn.engine.vae
+    :members:
+    :exclude-members: eval_batch, train_batch
+
+Wasserstein GANs
+^^^^^^^^^^^^^^^^
+
+.. automodule:: pyblaze.nn.engine.wgan
+    :members:
+    :exclude-members: train_batch, eval_batch
 
 Callbacks
 ---------
@@ -72,10 +103,22 @@ Tracking
 Modules
 -------
 
+Neural Network Layers
+^^^^^^^^^^^^^^^^^^^^^
+
 .. automodule:: pyblaze.nn.modules.lstm
     :members:
 
-.. automodule:: pyblaze.nn.modules.loss
+Losses
+^^^^^^
+
+.. automodule:: pyblaze.nn.modules.vae
+    :members:
+
+.. automodule:: pyblaze.nn.modules.wasserstein
+    :members:
+
+.. automodule:: pyblaze.nn.modules.gp
     :members:
 
 Functional

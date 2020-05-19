@@ -44,8 +44,8 @@ class TensorboardTracker(TrainingCallback):
         """
         Initializes a new Tensorboard tracker logging to the specified directory.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         local_dir: str
             The directory to log to.
         """

@@ -11,9 +11,10 @@ copyright = f'{datetime.datetime.now().year}, {author}' # pylint: disable=redefi
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
-    'sphinx_rtd_theme'
+    'sphinx.ext.mathjax',
+    'sphinx_rtd_theme',
+    'nbsphinx',
 ]
-templates_path = []
 exclude_patterns = []
 
 autodoc_member_order = 'bysource'
@@ -23,3 +24,6 @@ autodoc_default_options = {
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = []
+
+nbsphinx_execute = 'never'
+nbsphinx_prompt_width = '0'

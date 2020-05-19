@@ -7,9 +7,9 @@ import torch.utils.data as data
 ###############
 def loader(self, **kwargs):
     """
-    Returns a data loader for this dataset. If the dataset defines a `collate_fn` function, this is
-    automatically set. When `pyblaze.nn` is imported, this method is available on all
-    `torch.utils.data.Dataset` objects.
+    Returns a data loader for this dataset. If the dataset defines a :code:`collate_fn` function,
+    this is automatically set. When :code:`pyblaze.nn` is imported, this method is available on all
+    :code:`torch.utils.data.Dataset` objects.
 
     Parameters
     ----------
@@ -28,8 +28,12 @@ def loader(self, **kwargs):
 
 def random_split(self, *sizes, seed=None):
     """
-    Splits the dataset randomly into multiple subsets. When `pyblaze.nn` is imported, this method is
-    available on all `torch.utils.data.Dataset` objects.
+    Splits the dataset randomly into multiple subsets. When :code:`pyblaze.nn` is imported, this
+    method is available on all :code:`torch.utils.data.Dataset` objects.
+
+    Attention
+    ---------
+    Do not call this method on iterable datasets.
 
     Parameters
     ----------
