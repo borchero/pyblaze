@@ -60,11 +60,11 @@ class BatchProgressLogger(TrainingCallback):
         self.progress = ProgressBar(num_iterations, self.file)
         self.progress.start()
 
-    def after_batch(self, train_loss):
+    def after_batch(self, metrics):
         self.progress.step()
 
     def after_epoch(self, metrics):
-        self.progress.finish(metrics.to_dict())
+        self.progress.finish(metrics)
         self.progress = None
 
     def after_training(self):

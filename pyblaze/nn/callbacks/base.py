@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 
 class CallbackException(Exception):
     """
@@ -49,15 +49,16 @@ class TrainingCallback(ABC):
             The expected number of iterations for the batch.
         """
 
-    def after_batch(self, train_loss):
+    def after_batch(self, metrics):
         """
         Method is called at the end of a mini-batch. If the data is not partitioned into batches,
         this function is never called. The method may not raise exceptions.
 
         Parameters
         ----------
-        train_loss: float
-            The loss computed from the last mini-batch.
+        metrics: float or tuple or dict
+            The metrics obtained from the last mini-batch. This is the value that is returned from
+            an engine's :meth:`train_batch` method.
         """
 
     def after_epoch(self, metrics):
@@ -67,13 +68,26 @@ class TrainingCallback(ABC):
 
         Parameters
         ----------
-        metrics: pyblaze.nn.training.wrappers.Evaluation
+        metrics: float or tuple or dict
             Metrics obtained after training this epoch.
         """
 
     def after_training(self):
         """
         Method is called upon end of the training procedure. The method may not raise exceptions.
+        """
+
+
+class ValueTrainingCallback(TrainingCallback, ABC):
+    """
+    A training callback with an additional method that can be used to obtain a dynamically
+    changing value from the callback.
+    """
+
+    @abstractmethod
+    def read(self):
+        """
+        Returns the value that this training callback stores.
         """
 
 

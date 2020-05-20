@@ -156,6 +156,6 @@ Config
 Wrappers
 ^^^^^^^^
 
-.. automodule:: pyblaze.nn.engine.wrappers
+.. automodule:: pyblaze.nn.engine._history
     :members:
-    :exclude-members: __init__, cat, with_prefix, merge
+    :exclude-members: __init__, before_training, after_training, after_batch, after_epoch

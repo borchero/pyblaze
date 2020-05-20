@@ -6,7 +6,7 @@ class VAELoss(nn.Module):
     Gaussian distribution. Taken from "Auto-Encoding Variational Bayes" (Kingma and Welling, 2014).
     """
 
-    def __init__(self, loss, kld_coefficient=1):
+    def __init__(self, loss):
         """
         Initializes a new loss for a variational autoencoder.
 
@@ -14,15 +14,10 @@ class VAELoss(nn.Module):
         ----------
         loss: torch.nn.Module
             The loss to incur for the decoder's output given `(x_pred, x_true)`. This might e.g. be
-            a BCE loss.
-        kld_coefficient: float, default: 1
-            The multiplier for the Kullback-Leibler divergence that enforces that the encoder
-            outputs values from a Gaussian distribution.
+            a BCE loss. **The reduction must be 'none'.**
         """
         super().__init__()
-
         self.loss = loss
-        self.kld_coef = kld_coefficient
 
     def forward(self, x_pred, x_true, mu, logvar):
         """
@@ -44,6 +39,7 @@ class VAELoss(nn.Module):
         torch.Tensor [1]
             The loss incurred computed as the actual loss plus a weighted KL-divergence.
         """
-        loss = self.loss(x_pred, x_true)
-        kld = -0.5 * (1 + logvar - mu * mu - logvar.exp()).mean()
-        return loss + self.kld_coef * kld
+        dims = range(1, x_pred.dim())  # we want to sum over all dimensions but the batch dimension
+        loss = self.loss(x_pred, x_true).sum(tuple(dims))
+        kld = -0.5 * (1 + logvar - mu * mu - logvar.exp()).sum(-1)
+        return (loss + kld).mean()

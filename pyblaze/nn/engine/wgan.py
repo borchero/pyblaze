@@ -1,6 +1,6 @@
 import torch
 from .base import Engine
-from .utils import forward
+from ._utils import forward
 
 class WGANEngine(Engine):
     """
@@ -75,7 +75,7 @@ class WGANEngine(Engine):
             loss.backward()
 
             generator_optimizer.step()
-            summary['generator'] = loss.item()
+            summary['loss_generator'] = loss.item()
 
         # Train the critic for multiple iterations
         critic_losses = []
@@ -103,10 +103,20 @@ class WGANEngine(Engine):
             critic_losses.append(loss.item())
             em_distances.append(em_distance.item())
 
-        summary['critic'] = sum(critic_losses) / len(critic_losses)
+        summary['loss_critic'] = sum(critic_losses) / len(critic_losses)
         summary['em_distance'] = sum(em_distances) / len(em_distances)
 
         return summary
 
     def eval_batch(self, data):
         return 0
+
+    def collate_losses(self, losses):
+        losses_critic = [l['loss_critic'] for l in losses]
+        losses_generator = [l['loss_generator'] for l in losses]
+        em_distances = [l['em_distance'] for l in losses]
+        return {
+            'loss_critic': sum(losses_critic) / len(losses_critic),
+            'loss_generator': sum(losses_generator) / len(losses_generator),
+            'em_distance': sum(em_distances) / len(em_distances)
+        }

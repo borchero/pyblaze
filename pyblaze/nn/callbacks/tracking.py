@@ -30,7 +30,7 @@ class NeptuneTracker(TrainingCallback):
             self.experiment.log_metric('batch_train_loss', train_loss)
 
     def after_epoch(self, metrics):
-        for k, v in metrics.to_dict().items():
+        for k, v in metrics.items():
             self.experiment.log_metric(k, v)
 
 
@@ -69,6 +69,6 @@ class TensorboardTracker(TrainingCallback):
         self.batch_counter += 1
 
     def after_epoch(self, metrics):
-        for k, v in metrics.to_dict().items():
+        for k, v in metrics.items():
             self.writer.add_scalar(k, v, self.epoch_counter)
         self.epoch_counter += 1

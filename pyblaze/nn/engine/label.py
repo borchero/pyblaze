@@ -1,5 +1,5 @@
 from .base import Engine
-from .utils import forward
+from ._utils import forward
 
 class LabelEngine(Engine):
     """
@@ -31,28 +31,30 @@ class LabelEngine(Engine):
     gradient_accumulation_steps: int, default: 1
         The number of batches which should be used for a single update step. Gradient accumulation
         can be useful if the GPU can only fit a small batch size but model convergence is hindered
-        by that.
+        by that. The number of gradient accumulation steps may not be changed within an epoch.
     """
 
     def __init__(self, model):
         super().__init__(model)
-        self._grad_accum_cache = {}
+
+        self.num_it = None
+        self.current_it = None
 
     def before_epoch(self, current, num_iterations):
-        self._grad_accum_cache['num_iterations'] = num_iterations
-        self._grad_accum_cache['current_iteration'] = 0
+        self.num_it = num_iterations
+        self.current_it = 0
 
     # pylint: disable=unused-argument
     def after_batch(self, *args):
-        if 'current_iteration' in self._grad_accum_cache:
-            self._grad_accum_cache['current_iteration'] += 1
+        if self.current_it is not None:
+            self.current_it += 1
 
     def after_epoch(self, metrics):
-        self._grad_accum_cache = {}
+        self.num_it = None
+        self.current_it = None
 
     def train_batch(self, data, optimizer=None, loss=None, gradient_accumulation_steps=1):
-        it = self._grad_accum_cache['current_iteration']
-        if it == 0:
+        if self.current_it == 0:
             optimizer.zero_grad()
 
         loss_func = loss
@@ -63,8 +65,8 @@ class LabelEngine(Engine):
 
         loss.backward()
 
-        it_is_last = it == self._grad_accum_cache['num_iterations'] - 1
-        if it % gradient_accumulation_steps == 0 or it_is_last:
+        last_it = self.current_it == self.num_it - 1
+        if self.current_it % gradient_accumulation_steps == 0 or last_it:
             optimizer.step()
             optimizer.zero_grad()
 

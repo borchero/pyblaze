@@ -44,8 +44,18 @@ class EarlyStopping(TrainingCallback):
         self.best_metric = float('inf') if self.minimize else -float('inf')
 
     def after_epoch(self, metrics):
+        prev_epoch = self.epoch
         self.epoch += 1
-        if self._is_metric_better(metrics):
+
+        try:
+            is_better = self._is_metric_better(metrics)
+        except KeyError:
+            if prev_epoch > 0:
+                # In this case, we can ignore the key error and just skip -- the engine does not
+                # perform evaluation on every iteration
+                return
+
+        if is_better:
             if self.restore_best:
                 self.state_dict = copy.deepcopy(self.model.state_dict())
             self.counter = 0
