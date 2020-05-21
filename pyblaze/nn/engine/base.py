@@ -131,7 +131,7 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
             iterable_data = True
 
         exception = None
-        if iterable_data:
+        if iterable_data and eval_every is not None:
             # Here, epochs are considered iterations
             epochs = epochs // eval_every
 
@@ -206,7 +206,8 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
                 **eval_kwargs,
                 **{k: v.read() for k, v in dynamic_eval_kwargs.items()}
             }
-            do_val = eval_every is None or iterable_data or current_epoch % eval_every == 0
+            do_val = eval_every is None or iterable_data or \
+                current_epoch % eval_every == 0 or current_epoch == epochs - 1
 
             if val_data is not None and do_val:
                 eval_val = self.evaluate(

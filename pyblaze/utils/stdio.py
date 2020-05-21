@@ -56,6 +56,7 @@ class ProgressBar:
         self.total = total
         self.tic = None
         self._counter = None
+        self.latest_print_length = None
         if file is not None:
             os.makedirs(file, exist_ok=True)
             self.stream = open(file, 'a+')
@@ -71,6 +72,7 @@ class ProgressBar:
         a with statement.
         """
         self.tic = time.time()
+        self.latest_print_length = 0
         self._print_progress(compute_eta=False)
 
     def step(self):
@@ -106,6 +108,7 @@ class ProgressBar:
             metrics = {}
         self._print_done(metrics)
         self.tic = None
+        self.latest_print_length = None
 
     def __enter__(self):
         self.start()
@@ -147,13 +150,11 @@ class ProgressBar:
             eta = datetime.timedelta(0, int((1 - perc) / perc * elapsed))
         else:
             eta = 'n/a'
-        print(
-            "{} [{}{}] ({:02.1%}) ETA {} [Elapsed {}]".format(
-                _ERASE_LINE, progress, whitespace, perc, eta, elapsed_time
-            ),
-            end='\r',
-            file=self.stream
+
+        text = " [{}{}] ({:02.1%}) ETA {} [Elapsed {}]".format(
+            progress, whitespace, perc, eta, elapsed_time
         )
+        print(f"{_ERASE_LINE}{self._pad_whitespace(text)}", end='\r', file=self.stream)
         self.stream.flush()
 
     def _print_done(self, metrics):
@@ -170,9 +171,17 @@ class ProgressBar:
                 f = '{:.5f}'
             string = f'{split[0]}: {f}'.format(v)
             m_strings += [string]
-        print_text = " [Elapsed {}] {}".format(elapsed, ", ".join(m_strings))
-        print(f"{_ERASE_LINE}{print_text}", file=self.stream)
+        text = " [Elapsed {}] {}".format(elapsed, ", ".join(m_strings))
+        print(f"{_ERASE_LINE}{self._pad_whitespace(text)}", file=self.stream)
+        self.latest_print_length = 0
         self.stream.flush()
+
+    def _pad_whitespace(self, text):
+        diff = self.latest_print_length - len(text)
+        self.latest_print_length = max(len(text), self.latest_print_length)
+        if diff > 0:
+            return text + " " * diff
+        return text
 
     def __del__(self):
         if self.stream != sys.stdout:

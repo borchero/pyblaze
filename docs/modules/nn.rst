@@ -1,30 +1,6 @@
 Neural Network Training
 =======================
 
-Data
-----
-
-Noise
-^^^^^
-
-.. automodule:: pyblaze.nn.data.noise
-    :members:
-    :inherited-members:
-
-Zipping
-^^^^^^^
-
-.. automodule:: pyblaze.nn.data.zip
-    :members:
-    :inherited-members:
-
-Extensions
-^^^^^^^^^^
-
-.. automodule:: pyblaze.nn.data.extensions
-    :members:
-    :inherited-members:
-
 Engine
 ------
 

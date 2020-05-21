@@ -36,7 +36,7 @@ class VAEEngine(Engine):
             The VAE to train.
         ignore_target: bool, default: False
             When this value is set to `True`, the data passed to this engine is expected to yield
-            class labels. They are discarded as a result.
+            class labels. These are simply discarded.
         """
         super().__init__(model)
         self.ignore_target = ignore_target

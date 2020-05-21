@@ -35,55 +35,47 @@ class ParameterScheduler(ValueTrainingCallback):
     training.
     """
 
-    def __init__(self, parameter, schedule, after_batch=False):
+    def __init__(self, initial, schedule, **kwargs):
         """
         Initalizes a new scheduler for the given parameter.
 
         Parameters
         ----------
-        parameter: object
-            The parameter which should be modified over the course of the training.
-        schedule: func (object, int) -> object
-            Function which should update the parameter (given as first argument) based on itself
-            and the current epoch/iteration (second argument). The function must return the updated
-            parameter. The scheduler function is called after every epoch or iteration, depending
-            on the `after_batch` argument.
-        after_batch: bool, default: False
-            Whether to call the scheduler after every batch instead of after every epoch. The
-            schedule function is then passed as second parameter the current iteration (number of
-            all batches) instead of the epoch.
+        initial: object
+            The initial value fo the parameter which should be modified over the course of the
+            training.
+        schedule: func (int, int, **kwargs) -> object
+            Function which should return the value of the parameter based on the current epoch and
+            the iteration within the epoch. The function is called after every iteration (i.e.
+            batch). It is further passed the arguments given to this initializer.
+        kwargs: keyword arguments
+            Additional arguments passed to the :code:`schedule` function.
         """
-        self.parameter = parameter
+        self.parameter = initial
         self.schedule = schedule
-        self.exec_after_batch = after_batch
+        self.kwargs = kwargs
         self.epoch = None
-        self.iterations = None
+        self.iteration = None
 
     def read(self):
         return self.parameter
 
     def before_training(self, model, num_epochs):
-        self.iterations = 0
+        self.iteration = 0
 
     def before_epoch(self, current, num_iterations):
         self.epoch = current
 
     def after_batch(self, metrics):
-        self.iterations += 1
-        self._update(True)
+        self.iteration += 1
+        self._update()
 
     def after_epoch(self, metrics):
-        self._update(False)
+        self._update()
 
     def after_training(self):
         self.epoch = None
-        self.iterations = None
+        self.iteration = None
 
-    def _update(self, is_batch_update):
-        if is_batch_update != self.exec_after_batch:
-            return
-        if self.exec_after_batch:
-            update = self.schedule(self.parameter, self.iterations)
-        else:
-            update = self.schedule(self.parameter, self.epoch)
-        self.parameter = update
+    def _update(self):
+        self.parameter = self.schedule(self.epoch, self.iteration, **self.kwargs)

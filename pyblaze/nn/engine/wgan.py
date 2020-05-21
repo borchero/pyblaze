@@ -58,6 +58,21 @@ class WGANEngine(Engine):
         means of regularization should be preferred.
     """
 
+    def __init__(self, model, ignore_target=False):
+        """
+        Initializes a new engine for training a WGAN.
+
+        Parameters
+        ----------
+        model: torch.nn.Module
+            The WGAN to train.
+        ignore_target: bool, default: False
+            When this value is set to `True`, the real data instances passed to this engine are
+            expected to yield class labels. These are simply discarded.
+        """
+        super().__init__(model)
+        self.ignore_target = ignore_target
+
     def train_batch(self, data,
                     generator_optimizer=None, critic_optimizer=None,
                     generator_loss=None, critic_loss=None,
@@ -83,13 +98,14 @@ class WGANEngine(Engine):
         for i in range(critic_iterations):
             critic_optimizer.zero_grad()
 
+            real_instance = self._get_real(real[i])
+
             with torch.no_grad():
                 fake = forward(self.model.generator, noise[i+1])
 
             c_fake = forward(self.model.critic, fake)
-            c_real = forward(self.model.critic, real[i])
-
-            loss, em_distance = critic_loss(c_fake, c_real, fake, real[i])
+            c_real = forward(self.model.critic, real_instance)
+            loss, em_distance = critic_loss(c_fake, c_real, fake, real_instance)
             loss.backward()
 
             critic_optimizer.step()
@@ -113,10 +129,15 @@ class WGANEngine(Engine):
 
     def collate_losses(self, losses):
         losses_critic = [l['loss_critic'] for l in losses]
-        losses_generator = [l['loss_generator'] for l in losses]
+        losses_generator = [l['loss_generator'] for l in losses if 'loss_generator' in l]
         em_distances = [l['em_distance'] for l in losses]
         return {
             'loss_critic': sum(losses_critic) / len(losses_critic),
             'loss_generator': sum(losses_generator) / len(losses_generator),
             'em_distance': sum(em_distances) / len(em_distances)
         }
+
+    def _get_real(self, real):
+        if self.ignore_target:
+            return real[0]
+        return real

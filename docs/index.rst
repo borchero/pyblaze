@@ -25,6 +25,7 @@ PyBlaze is available on PyPi and can simply be installed as follows:
    :maxdepth: 2
    :caption: Package Reference
 
+   modules/data
    modules/multiprocessing
    modules/nn
    modules/optim
