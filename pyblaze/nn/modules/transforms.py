@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.init as init
-import torch.autograd as autograd
+import torch.nn.functional as F
 
 # pylint: disable=abstract-method
 class _Transform(nn.Module):
@@ -80,7 +80,7 @@ class AffineTransform(_Transform):
 
         y = self.log_alpha.exp() * z + self.beta  # [N, D]
 
-        log_det = self.alpha.sum()  # [1]
+        log_det = self.log_alpha.sum()  # [1]
         log_det = log_det.expand(batch_size)  # [N]
 
         return y, log_det
@@ -93,21 +93,22 @@ class PlanarTransform(_Transform):
     r"""
     A planar transformation may be used to split the input along a hyperplane. It was introduced in
     "Variational Inference with Normalizing Flows" (Rezende and Mohamed, 2015). It computes the
-    following function for :math:`\bm{z} \in \mathhbb{R}^D` where :math:`\\sigma` is an arbitrary
-    activation function:
+    following function for :math:`\bm{z} \in \mathhbb{R}^D` (although the planar transform was
+    introduced for an arbitrary activation function :math:`\sigma`, this transform restricts the
+    usage to :math:`tanh`):
 
-        :math:`f_{\bm{u}, \bm{w}, b}(\bm{z}) = \bm{z} + \bm{u} \sigma(\bm{w}^T \bm{z} + b)`
+        :math:`f_{\bm{u}, \bm{w}, b}(\bm{z}) = \bm{z} + \bm{u} \tanh(\bm{w}^T \bm{z} + b)`
 
     with :math:`\bm{u}, \bm{w} \in \mathhbb{R}^D` and :math:`b \in \mathbb{R}`.
 
     The log-determinant of its Jacobian is given as follows:
 
-        :math:`\log\left| 1 + \bm{u}^T (\sigma'(\bm{w}^T \bm{z} + b) \bm{w}) \right|`
+        :math:`\log\left| 1 + \bm{u}^T ((1 - \tanh^2(\bm{w}^T \bm{z} + b)) \bm{w}) \right|`
 
-    This transform is implemented without ensuring invertibility.
+    This transform is invertible for its outputs.
     """
 
-    def __init__(self, dim, activation=nn.Tanh()):
+    def __init__(self, dim):
         r"""
         Initializes a new planar transformation.
 
@@ -115,16 +116,12 @@ class PlanarTransform(_Transform):
         ----------
         dim: int
             The dimension of the inputs to the function.
-        activation: torch.nn.Module, default: torch.nn.Tanh()
-            The activation function to use. By default, :math:`\tanh` is used.
         """
         super().__init__(dim)
 
         self.u = nn.Parameter(torch.empty(dim))
         self.w = nn.Parameter(torch.empty(dim))
         self.bias = nn.Parameter(torch.empty(1))
-        self.activation = activation
-
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -151,13 +148,17 @@ class PlanarTransform(_Transform):
         torch.Tensor [N]
             The log-determinants of the Jacobian evaluated at z.
         """
-        inner = z @ self.w + self.bias  # [N]
-        sigma = self.activation(inner)  # [N]
-        y = z + sigma.ger(self.u)  # [N, D]
+        dot = self.u @ self.w  # [1]
+        m = F.softplus(dot) - 1  # [1]
+        w_prime = self.w / (self.w ** 2).sum()  # [D]
+        u_prime = self.u + (m - dot) * w_prime  # [D]
 
-        sigma_d = autograd.grad(sigma.sum(), inner, create_graph=True)  # [N]
+        sigma = (z @ self.w + self.bias).tanh()  # [N]
+        y = z + sigma.ger(u_prime)  # [N, D]
+
+        sigma_d = 1 - sigma ** 2  # [N]
         phi = sigma_d.ger(self.w)  # [N, D]
-        det = (1 + phi @ self.u).abs()  # [N]
+        det = (1 + phi @ u_prime).abs()  # [N]
         log_det = det.log()  # [N]
 
         return y, log_det
@@ -182,7 +183,8 @@ class RadialTransform(_Transform):
 
         :math:`\log\left| 1 + \bm{u}^T (\sigma'(\bm{w}^T \bm{z} + b) \bm{w}) \right|`
 
-    This transform is implemented without ensuring invertibility.
+    This transform is invertible for its outputs, however, there does not exist a closed-form
+    solution for computing the inverse in general.
     """
 
     def __init__(self, dim):
@@ -199,8 +201,8 @@ class RadialTransform(_Transform):
         super().__init__(dim)
 
         self.reference = nn.Parameter(torch.empty(dim))
-        self.log_alpha = nn.Parameter(torch.empty(1))
-        self.beta = nn.Parameter(torch.empty(1))
+        self.alpha_prime = nn.Parameter(torch.empty(1))
+        self.beta_prime = nn.Parameter(torch.empty(1))
 
         self.reset_parameters()
 
@@ -210,8 +212,8 @@ class RadialTransform(_Transform):
         distribution.
         """
         init.normal_(self.reference)
-        init.normal_(self.log_alpha)
-        init.normal_(self.beta)
+        init.normal_(self.alpha_prime)
+        init.normal_(self.beta_prime)
 
     def forward(self, z):
         """
@@ -229,17 +231,18 @@ class RadialTransform(_Transform):
         torch.Tensor [N]
             The log-determinants of the Jacobian evaluated at z.
         """
-        alpha = self.log_alpha.exp()  # [1]
+        alpha = F.softplus(self.alpha_prime)  # [1]
+        beta = -alpha + F.softplus(self.beta_prime)  # [1]
 
         diff = z - self.reference  # [N, D]
-        r = diff.norm(dim=-1, keepdim=True)  # [N, 1]
+        r = diff.norm(p=2, dim=-1, keepdim=True)  # [N, 1]
         h = (alpha + r).reciprocal()  # [N]
-        beta_h = self.beta * h  # [N]
+        beta_h = beta * h  # [N]
         y = z + beta_h * diff  # [N, D]
 
         h_d = -(h ** 2)  # [N]
         log_det_lhs = (self.dim - 1) * beta_h.log1p()  # [N]
-        log_det_rhs = (beta_h + self.beta * h_d * r).log1p()  # [N, 1]
+        log_det_rhs = (beta_h + beta * h_d * r).log1p()  # [N, 1]
         log_det = (log_det_lhs + log_det_rhs).view(-1)  # [N]
 
         return y, log_det

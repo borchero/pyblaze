@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from collections import defaultdict
 import torch
 import torch.nn as nn
 import torch.cuda as cuda
@@ -456,11 +457,9 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
 
         Returns
         -------
-        torch.Tensor
-            The output from the model.
         object
-            The target, i.e. correct output. If this is not a `torch.Tensor`, the `collate_targets`
-            should be overriden.
+            The model output and possibly some correct target. If this is not a
+            :code:`torch.Tensor`, the :meth:`collate_evals`.
         """
 
     # pylint: disable=unused-argument
@@ -512,6 +511,22 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
         dict of str -> object
             The loss names mapped to their values (usually float values).
         """
+        ref = losses[0]
+
+        if isinstance(ref, dict):
+            result = defaultdict(list)
+            for item in losses:
+                for k, v in item.items():
+                    result[k].append(v)
+            return {k: sum(v) / len(v) for k, v in result.items()}
+
+        if isinstance(ref, (list, tuple)):
+            result = [[] for _ in len(ref)]
+            for item in losses:
+                for i, it in enumerate(item):
+                    result[i].append(it)
+            return {f'loss_{i}': sum(r) / len(r) for i, r in enumerate(result)}
+
         return {'loss': sum(losses) / len(losses)}
 
     def collate_evals(self, evals):
@@ -579,7 +594,7 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
         if isinstance(ref, dict):
             return {key: torch.cat([v[key] for v in items]) for key in ref.keys()}
         if isinstance(ref, (list, tuple)):
-            return tuple([torch.cat([v[i] for v in items]) for i in range(len(ref))])
+            return tuple(torch.cat([v[i] for v in items]) for i in range(len(ref)))
         return torch.cat(items)
 
 

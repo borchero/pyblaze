@@ -127,16 +127,6 @@ class WGANEngine(Engine):
     def eval_batch(self, data):
         return 0
 
-    def collate_losses(self, losses):
-        losses_critic = [l['loss_critic'] for l in losses]
-        losses_generator = [l['loss_generator'] for l in losses if 'loss_generator' in l]
-        em_distances = [l['em_distance'] for l in losses]
-        return {
-            'loss_critic': sum(losses_critic) / len(losses_critic),
-            'loss_generator': sum(losses_generator) / len(losses_generator),
-            'em_distance': sum(em_distances) / len(em_distances)
-        }
-
     def _get_real(self, real):
         if self.ignore_target:
             return real[0]

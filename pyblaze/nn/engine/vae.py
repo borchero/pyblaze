@@ -13,9 +13,9 @@ class VAEEngine(Engine):
     Parameters
     ----------
     x: object
-        The input to the encoder (as well as the target).
+        The input to the encoder (this equals the target of the decoder).
 
-    The :meth:`train` method allows for thhe following keyword arguments:
+    The :meth:`train` method allows for the following keyword arguments:
 
     Parameters
     ----------

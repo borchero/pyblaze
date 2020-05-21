@@ -102,7 +102,7 @@ def _recursive_apply(attribute, function, *args):
     if len(args) == 1 and isinstance(args[0], list):
         return [_recursive_apply(attribute, function, t) for t in args[0]]
     if len(args) == 1 and isinstance(args[0], tuple) and not isinstance(args[0], PackedSequence):
-        return tuple([_recursive_apply(attribute, function, t) for t in args[0]])
+        return tuple(_recursive_apply(attribute, function, t) for t in args[0])
     if len(args) == 1 and isinstance(args[0], dict):
         return {k: _recursive_apply(attribute, function, v) for k, v in args[0].items()}
     if len(args) == 1 and hasattr(args[0], attribute):

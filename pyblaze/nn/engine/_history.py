@@ -91,7 +91,7 @@ class History(TrainingCallback):
     @property
     def duration(self):
         """
-        Returns the duration that this history object recorded for the duration of thhe training.
+        Returns the duration that this history object recorded for the duration of the training.
         """
         return self.end_time - self.start_time
 
