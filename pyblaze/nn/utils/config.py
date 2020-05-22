@@ -94,8 +94,7 @@ class Config(ABC):
 
         if not self.is_valid():
             raise ValueError(
-                f'Invalid configuration parameters. Check the documentation '
-                f'for valid options.'
+                'Invalid configuration parameters. Check the documentation for valid options.'
             )
 
     def save(self, file):

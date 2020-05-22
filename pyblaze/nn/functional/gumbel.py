@@ -1,5 +1,4 @@
 import torch
-import torch.jit as jit
 import torch.nn.functional as F
 
 def gumbel_softmax(logits: torch.Tensor,

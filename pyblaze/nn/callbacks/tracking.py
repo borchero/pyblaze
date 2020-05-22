@@ -65,7 +65,7 @@ class TensorboardTracker(TrainingCallback):
             for k, val in train_loss.items():
                 self.writer.add_scalar(f'batch_train_loss_{k}', val, self.batch_counter)
         else:
-            self.writer.add_scalar(f'batch_train_loss', train_loss, self.batch_counter)
+            self.writer.add_scalar('batch_train_loss', train_loss, self.batch_counter)
         self.batch_counter += 1
 
     def after_epoch(self, metrics):

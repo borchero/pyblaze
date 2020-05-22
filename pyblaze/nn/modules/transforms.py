@@ -114,7 +114,7 @@ class PlanarTransform(_Transform):
     The log-determinant of its Jacobian is given as follows:
 
     .. math::
-        
+
         \log\left| 1 + \mathbf{u}^T ((1 - \tanh^2(\mathbf{w}^T \mathbf{z} + b))\mathbf{w}) \right|
 
 
@@ -199,7 +199,7 @@ class RadialTransform(_Transform):
     The log-determinant of its Jacobian is given as follows:
 
     .. math::
-        
+
         (D - 1) \log\left(1 + \beta h(\alpha, r)\right) +
             \log\left(1 + \beta h(\alpha, r) - \beta h^2(\alpha, r) r \right)
 

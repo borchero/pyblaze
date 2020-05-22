@@ -36,7 +36,7 @@ class ParameterScheduler(ValueTrainingCallback):
     """
 
     def __init__(self, initial, schedule, **kwargs):
-        """
+        r"""
         Initalizes a new scheduler for the given parameter.
 
         Parameters

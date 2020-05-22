@@ -60,7 +60,7 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
     # pylint: disable=too-many-branches,too-many-statements
     def train(self, train_data, val_data=None, epochs=20, val_iterations=None, eval_every=None,
               eval_train=False, eval_val=True, callbacks=None, metrics=None, gpu='auto', **kwargs):
-        """
+        r"""
         Method for training the model with the supplied parameters.
 
         Parameters
