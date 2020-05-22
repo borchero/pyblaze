@@ -44,10 +44,11 @@ class ParameterScheduler(ValueTrainingCallback):
         initial: object
             The initial value fo the parameter which should be modified over the course of the
             training.
-        schedule: func (int, int, **kwargs) -> object
-            Function which should return the value of the parameter based on the current epoch and
-            the iteration within the epoch. The function is called after every iteration (i.e.
-            batch). It is further passed the arguments given to this initializer.
+        schedule: func (object, int, int, \**kwargs) -> object
+            Function which should return the value of the parameter based on the current value of
+            the parameter, the current epoch, and the iteration within the epoch. The function is
+            called after every iteration (i.e. batch). It is further passed the arguments given to
+            this initializer.
         kwargs: keyword arguments
             Additional arguments passed to the :code:`schedule` function.
         """
@@ -78,4 +79,4 @@ class ParameterScheduler(ValueTrainingCallback):
         self.iteration = None
 
     def _update(self):
-        self.parameter = self.schedule(self.epoch, self.iteration, **self.kwargs)
+        self.parameter = self.schedule(self.parameter, self.epoch, self.iteration, **self.kwargs)

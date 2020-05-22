@@ -2,7 +2,6 @@ import torch
 import torch.jit as jit
 import torch.nn.functional as F
 
-@jit.script
 def gumbel_softmax(logits: torch.Tensor,
                    tau: float = 1,
                    hard: bool = False,

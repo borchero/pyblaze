@@ -2,7 +2,7 @@ import torch
 import matplotlib.pyplot as plt
 
 def density_plot2d(distribution, x_range=(-1, 1), y_range=(-1, 1), resolution=500,
-                   cmap='gist_heat', **kwargs):
+                   cmap='Blues', **kwargs):
     """
     Generates a scatter plot visualizing the distribution's density in the given 2D region.
 

@@ -15,6 +15,7 @@ class LikelihoodEngine(Engine):
     x: object
         The input to the model to evaluate the NLL for.
 
+
     The :meth:`train` method allows for the following keyword arguments:
 
     Parameters

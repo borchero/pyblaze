@@ -1,23 +1,46 @@
 Data
 ====
 
+.. code:: python
+
+    import pyblaze.nn as xnn
+
+The data module provides utilities for working with PyTorch datasets.
+
+.. contents:: Contents
+    :local:
+    :depth: 1
+
 Extensions
 ----------
 
-.. automodule:: pyblaze.nn.data.extensions
-    :members:
-    :inherited-members:
+Dataset Splitting
+^^^^^^^^^^^^^^^^^
+
+.. autofunction:: pyblaze.nn.data.extensions.random_split
+
+Data Loader
+^^^^^^^^^^^
+
+.. autofunction:: pyblaze.nn.data.extensions.loader
+
+Datasets
+--------
 
 Noise
------
+^^^^^
 
-.. automodule:: pyblaze.nn.data.noise
+.. autoclass:: pyblaze.nn.NoiseDataset
     :members:
     :inherited-members:
+    :exclude-members: loader, random_split
 
-Combining Datasets
-------------------
+Data Loaders
+------------
 
-.. automodule:: pyblaze.nn.data.zip
+Zipping
+^^^^^^^
+
+.. autoclass:: pyblaze.nn.ZipDataLoader
     :members:
     :inherited-members:

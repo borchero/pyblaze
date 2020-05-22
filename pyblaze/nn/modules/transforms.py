@@ -23,15 +23,21 @@ class _Transform(nn.Module):
 class AffineTransform(_Transform):
     r"""
     An affine transformation may be used to transform an input variable linearly. It computes the
-    following function for :math:`\bm{z} \in \mathbb{R}^D`:
+    following function for :math:`\mathbf{z} \in \mathbb{R}^D`:
 
-        :math:`f_{\bm{a}, \bm{b}}(\bm{z}) = \bm{a} \odot \bm{z} + \bm{b}`
+    .. math::
 
-    with :math:`\bm{a} \in \mathbb{R}^D_+` and :math:`\bm{b} \in \mathbb{R}^D`.
+        f_{\mathbf{a}, \mathbf{b}}(\mathbf{z}) = \mathbf{a} \odot \mathbf{z} + \mathbf{b}
+
+
+    with :math:`\mathbf{a} \in \mathbb{R}^D_+` and :math:`\mathbf{b} \in \mathbb{R}^D`.
 
     The log-determinant of its Jacobian is given as follows:
 
-        :math:`\sum_{k=1}^D{\log{a_k}}`
+    .. math::
+
+        \sum_{k=1}^D{\log{a_k}}
+
 
     Although this transformation is theoretically invertible, the inverse function is not
     implemented at the moment.
@@ -93,17 +99,24 @@ class PlanarTransform(_Transform):
     r"""
     A planar transformation may be used to split the input along a hyperplane. It was introduced in
     "Variational Inference with Normalizing Flows" (Rezende and Mohamed, 2015). It computes the
-    following function for :math:`\bm{z} \in \mathhbb{R}^D` (although the planar transform was
+    following function for :math:`\mathbf{z} \in \mathbb{R}^D` (although the planar transform was
     introduced for an arbitrary activation function :math:`\sigma`, this transform restricts the
     usage to :math:`tanh`):
 
-        :math:`f_{\bm{u}, \bm{w}, b}(\bm{z}) = \bm{z} + \bm{u} \tanh(\bm{w}^T \bm{z} + b)`
+    .. math::
 
-    with :math:`\bm{u}, \bm{w} \in \mathhbb{R}^D` and :math:`b \in \mathbb{R}`.
+        f_{\mathbf{u}, \mathbf{w}, b}(\mathbf{z}) =
+            \mathbf{z} + \mathbf{u} \tanh(\mathbf{w}^T \mathbf{z} + b)
+
+
+    with :math:`\mathbf{u}, \mathbf{w} \in \mathbb{R}^D` and :math:`b \in \mathbb{R}`.
 
     The log-determinant of its Jacobian is given as follows:
 
-        :math:`\log\left| 1 + \bm{u}^T ((1 - \tanh^2(\bm{w}^T \bm{z} + b)) \bm{w}) \right|`
+    .. math::
+        
+        \log\left| 1 + \mathbf{u}^T ((1 - \tanh^2(\mathbf{w}^T \mathbf{z} + b))\mathbf{w}) \right|
+
 
     This transform is invertible for its outputs.
     """
@@ -171,17 +184,25 @@ class RadialTransform(_Transform):
     r"""
     A radial transformation may be used to apply radial contractions and expansions around a
     reference point. It was introduced in "Variational Inference with Normalizing Flows" (Rezende
-    and Mohamed, 2015). It computes the following function for :math:`\bm{z} \in \mathhbb{R}^D`:
+    and Mohamed, 2015). It computes the following function for :math:`\mathbf{z} \in \mathbb{R}^D`:
 
-        :math:`f_{\bm{z}_0, \alpha, \beta}(\bm{z}) = \bm{z} + \beta h(\alpha, r)(\bm{z} - \bm{z}_0)`
+    .. math::
 
-    with :math:`\bm{z}_0 \in \mathbb{R}^D`, :math:`\alpha \in \mathbb{R}^+`,
-    :math:`\beta \in \mathbb{R}`, :math:`\bm{r} = ||\bm{z} - \bm{z}_0||_2` and
+        f_{\mathbf{z}_0, \alpha, \beta}(\mathbf{z}) =
+            \mathbf{z} + \beta h(\alpha, r) (\mathbf{z} - \mathbf{z}_0)
+
+
+    with :math:`\mathbf{z}_0 \in \mathbb{R}^D`, :math:`\alpha \in \mathbb{R}^+`,
+    :math:`\beta \in \mathbb{R}`, :math:`\mathbf{r} = ||\mathbf{z} - \mathbf{z}_0||_2` and
     :math:`h(\alpha, r) = (\alpha + r)^{-1}`.
 
     The log-determinant of its Jacobian is given as follows:
 
-        :math:`\log\left| 1 + \bm{u}^T (\sigma'(\bm{w}^T \bm{z} + b) \bm{w}) \right|`
+    .. math::
+        
+        (D - 1) \log\left(1 + \beta h(\alpha, r)\right) +
+            \log\left(1 + \beta h(\alpha, r) - \beta h^2(\alpha, r) r \right)
+
 
     This transform is invertible for its outputs, however, there does not exist a closed-form
     solution for computing the inverse in general.

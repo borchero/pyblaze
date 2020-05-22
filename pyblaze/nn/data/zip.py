@@ -16,9 +16,9 @@ class ZipDataLoader:
 
         Parameters
         ----------
-        lhs_dataset: torch.utils.data.IterableDataset
+        lhs_dataset: torch.utils.data.DataLoader
             The dataset to sample from for the first item of the data tuple.
-        rhs_dataset: torch.utils.data.IterableDataset
+        rhs_dataset: torch.utils.data.DataLoader
             The dataset to sample from for the second item of the data tuple.
         lhs_count: int
             The number of items to sample for the first item of the data tuple.

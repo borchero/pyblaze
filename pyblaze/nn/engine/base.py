@@ -106,10 +106,10 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
             available GPUs are used.
         kwargs: keyword arguments
             Additional keyword arguments dependent on the specific subclass. If prefixed with
-            'eval_', it will be passed to :meth:`eval_batch` (without the prefix), otherwise to
+            'eval\_', it will be passed to :meth:`eval_batch` (without the prefix), otherwise to
             :meth:`train_batch`. All keyword arguments may also be given as `ParameterScheduler`
             to enable dynamic changes in parameters. Note that the scheduler can also be used to
-            alter values for 'eval_' keywords. However, they do so following the same schedule as
+            alter values for 'eval\_' keywords. However, they do so following the same schedule as
             the training keywords. In any case, consult the engine's documentation if the
             parameter allows dynamic behavior. Semantically, it might not make sense to do.
 

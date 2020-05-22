@@ -20,7 +20,7 @@ setup(
     url='https://github.com/borchero/pyblaze',
     packages=find_packages(),
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Programming Language :: Python :: 3.7',
         'Topic :: Software Development :: Libraries'
     ],
