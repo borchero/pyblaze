@@ -1,8 +1,8 @@
 Multiprocessing
 ===============
 
-Vectorizer
-----------
+Vectorization
+-------------
 
 .. automodule:: pyblaze.multiprocessing.vectorize
     :members:

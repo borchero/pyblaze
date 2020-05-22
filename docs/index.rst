@@ -14,11 +14,20 @@ PyBlaze is available on PyPi and can simply be installed as follows:
 
 .. toctree::
    :glob:
-   :maxdepth: 2
-   :caption: Guides
+   :maxdepth: 1
+   :caption: Basics
 
    guides/classifier
    guides/multiprocessing
+
+.. toctree::
+   :glob:
+   :maxdepth: 1
+   :caption: Generative Models
+
+   guides/vae
+   guides/wgan
+   guides/normalizing-flows
 
 .. toctree::
    :glob:
@@ -28,6 +37,7 @@ PyBlaze is available on PyPi and can simply be installed as follows:
    modules/data
    modules/multiprocessing
    modules/nn
+   modules/plot
    modules/optim
    modules/utils
 
