@@ -61,9 +61,8 @@ class WassersteinLossCritic(nn.Module):
         torch.Tensor [1]
             The loss incurred for the critic.
         torch.Tensor [1]
-            The Earth mover's (Wasserstein-1) distance (equal to the detached negative loss if
-            there is no gradient penalty, otherwise, its absolute value is smaller than the loss's
-            absolute value).
+            The estimated Earth mover's (Wasserstein-1) distance (equal to the detached negative
+            loss if there is no gradient penalty).
         """
         loss = out_fake.mean() - out_real.mean()
         wass_dist = -loss.detach()

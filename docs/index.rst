@@ -45,7 +45,7 @@ Engines are currently implemented for the following training procedures:
 
 - :class:`pyblaze.nn.MLEEngine`: This is the most central engine as it enables supervised as well as
   unsupservised learning. It can therefore adapt to multiple different problems: classification,
-  regression, (variational) autoencoders, ... --- depending on the loss only. In order to simplify
+  regression, (variational) autoencoders, ..., depending on the loss only. In order to simplify
   initialization (as configuration requires toggling some settings), there exist some specialized
   MLE engines. Currently, the only one is :class:`pyblaze.nn.AutoencoderEngine`.
 

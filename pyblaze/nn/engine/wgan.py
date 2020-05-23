@@ -3,11 +3,14 @@ from .base import Engine
 from ._utils import forward
 
 class WGANEngine(Engine):
-    """
+    r"""
     Engine to be used for training a Wasserstein GAN. It enables training the critic for multiple
     iterations as well as skipping the training of the generator for specific iterations.
 
-    The GAN msut be supplied as a single model with :code:`generator` and :code:`critic` attributes.
+    The GAN must be supplied as a single model with :code:`generator` and :code:`critic` attributes.
+    The output of the generator must be feedable directly to the :meth:`forward` method of the
+    critic. The supplied combined model does therefore not necessarily need to implement a
+    :meth:`forward` method.
 
 
     The engine requires data to be available in the following format:
@@ -56,6 +59,15 @@ class WGANEngine(Engine):
         When this value is given, all weights of the generator are clamped into the given range
         after every step of the optimizer. While this ensures Lipschitz-continuity, using different
         means of regularization should be preferred.
+    kwargs: keyword arguments
+        Additional keyword arguments. If they start with 'generator\_', they will be passed only to
+        the generator, the same applies to keywords starting with 'critic\_'.
+
+    Note
+    ----
+    Calling :meth:`evaluate` on this engine is not possible as there is no principled way to
+    evaluate generator performance for an arbitrary generator. Subclass this engine to add the
+    possibility for evaluation.
     """
 
     def __init__(self, model, expects_data_target=False):
@@ -73,10 +85,15 @@ class WGANEngine(Engine):
         super().__init__(model)
         self.expects_data_target = expects_data_target
 
+    ################################################################################
+    ### MAIN IMPLEMENTATION
+    ################################################################################
     def train_batch(self, data,
                     generator_optimizer=None, critic_optimizer=None,
                     generator_loss=None, critic_loss=None,
-                    critic_iterations=3, skip_generator=False, clip_weights=None):
+                    critic_iterations=3, skip_generator=False, clip_weights=None, **kwargs):
+
+        generator_kwargs, critic_kwargs = self._get_kwargs(**kwargs)
 
         noise, real = data
         summary = {}
@@ -85,7 +102,8 @@ class WGANEngine(Engine):
         if not skip_generator:
             generator_optimizer.zero_grad()
 
-            c_fake = forward(self.model, noise[0])
+            fake = forward(self.model.generator, noise[0], **generator_kwargs)
+            c_fake = forward(self.model.critic, fake, **critic_kwargs)
             loss = generator_loss(c_fake)
             loss.backward()
 
@@ -101,10 +119,10 @@ class WGANEngine(Engine):
             real_instance = self._get_real(real[i])
 
             with torch.no_grad():
-                fake = forward(self.model.generator, noise[i+1])
+                fake = forward(self.model.generator, noise[i+1], **generator_kwargs)
 
-            c_fake = forward(self.model.critic, fake)
-            c_real = forward(self.model.critic, real_instance)
+            c_fake = forward(self.model.critic, fake, **critic_kwargs)
+            c_real = forward(self.model.critic, real_instance, **critic_kwargs)
             loss, em_distance = critic_loss(c_fake, c_real, fake, real_instance)
             loss.backward()
 
@@ -125,9 +143,17 @@ class WGANEngine(Engine):
         return summary
 
     def eval_batch(self, data):
-        return 0
+        raise NotImplementedError("Evaluation is not available for arbitrary GANs")
 
+    ################################################################################
+    ### PRIVATE
+    ################################################################################
     def _get_real(self, real):
         if self.expects_data_target:
             return real[0]
         return real
+
+    def _get_kwargs(self, **kwargs):
+        generator_kwargs = {k: v for k, v in kwargs.items() if not k.startswith('critic_')}
+        critic_kwargs = {k: v for k, v in kwargs.items() if not k.startswith('generator_')}
+        return generator_kwargs, critic_kwargs

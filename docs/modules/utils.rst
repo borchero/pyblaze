@@ -19,13 +19,13 @@ Neural Networks
 Estimator
 ^^^^^^^^^
 
-.. autoclass:: pyblaze.nn.estimator.Estimator
+.. autoclass:: pyblaze.nn.Estimator
     :members:
 
 Config
 ^^^^^^
 
-.. autoclass:: pyblaze.nn.config.Config
+.. autoclass:: pyblaze.nn.Config
     :members:
 
 Trainining History

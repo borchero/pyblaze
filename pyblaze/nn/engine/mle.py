@@ -44,6 +44,9 @@ class MLEEngine(Engine):
         The number of batches which should be used for a single update step. Gradient accumulation
         can be useful if the GPU can only fit a small batch size but model convergence is hindered
         by that. The number of gradient accumulation steps may not be changed within an epoch.
+    kwargs: keyword arguments
+        Additional keyword arguments passed to the :meth:`forward` method of the model. These
+        keyword arguments may also be passed for the :meth:`eval_batch` method call.
 
     Note
     ----
@@ -98,7 +101,7 @@ class MLEEngine(Engine):
     ################################################################################
     ### MAIN IMPLEMENTATION
     ################################################################################
-    def train_batch(self, data, optimizer=None, loss=None, gradient_accumulation_steps=1):
+    def train_batch(self, data, optimizer=None, loss=None, gradient_accumulation_steps=1, **kwargs):
         if self.current_it == 0:
             optimizer.zero_grad()
 
@@ -106,7 +109,7 @@ class MLEEngine(Engine):
         x, target = self._get_x_target(data)
 
         # Get the model output
-        out = forward(self.model, x)
+        out = forward(self.model, x, **kwargs)
 
         # Apply the loss
         loss_input = self._merge_out_target_x(out, target, x)
@@ -122,9 +125,9 @@ class MLEEngine(Engine):
         # Return the loss
         return loss_val.item()
 
-    def eval_batch(self, data):
+    def eval_batch(self, data, **kwargs):
         x, target = self._get_x_target(data)
-        out = forward(self.model, x)
+        out = forward(self.model, x, **kwargs)
         return self._merge_out_target_x(out, target, x)
 
     ################################################################################

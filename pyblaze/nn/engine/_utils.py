@@ -1,4 +1,4 @@
-def forward(model, x):
+def forward(model, x, **kwargs):
     """
     Computes the model output for common types of inputs.
 
@@ -8,6 +8,8 @@ def forward(model, x):
         The model to compute the output for.
     x: list or tuple or dict or object
         The input the model.
+    kwargs: keyword arguments
+        Additional model inputs passed by keyword.
 
     Returns
     -------
@@ -15,7 +17,7 @@ def forward(model, x):
         The output of the model (although arbitrary, it is usually a torch.Tensor).
     """
     if isinstance(x, (list, tuple)):
-        return model(*x)
+        return model(*x, **kwargs)
     if isinstance(x, dict):
-        return model(**x)
-    return model(x)
+        return model(**x, **kwargs)
+    return model(x, **kwargs)
