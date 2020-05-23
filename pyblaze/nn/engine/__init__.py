@@ -1,5 +1,4 @@
+from .autoencoder import AutoencoderEngine
 from .base import Engine
-from .label import LabelEngine
-from .likelihood import LikelihoodEngine
-from .vae import VAEEngine
+from .mle import MLEEngine
 from .wgan import WGANEngine

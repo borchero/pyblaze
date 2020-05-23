@@ -19,26 +19,18 @@ Base Class
 .. autoclass:: pyblaze.nn.Engine
     :members:
 
-Supervised Learning
--------------------
+Maximum Likelihood Estimation
+-----------------------------
 
-.. autoclass:: pyblaze.nn.LabelEngine
+.. autoclass:: pyblaze.nn.MLEEngine
     :members:
-    :exclude-members: __init__, after_batch, after_epoch, before_epoch, eval_batch, train_batch
+    :exclude-members: after_batch, after_epoch, before_epoch, eval_batch, train_batch
 
-Likelihood Learning
--------------------
+Autoencoders
+------------
 
-.. autoclass:: pyblaze.nn.LikelihoodEngine
+.. autoclass:: pyblaze.nn.AutoencoderEngine
     :members:
-    :exclude-members: eval_batch, train_batch
-
-Variational Autoencoders
-------------------------
-
-.. autoclass:: pyblaze.nn.VAEEngine
-    :members:
-    :exclude-members: eval_batch, train_batch
 
 Wasserstein GANs
 ----------------

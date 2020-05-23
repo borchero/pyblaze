@@ -19,7 +19,7 @@ class VAELoss(nn.Module):
         super().__init__()
         self.loss = loss
 
-    def forward(self, x_pred, x_true, mu, logvar):
+    def forward(self, x_pred, mu, logvar, x_true):
         """
         Computes the loss of the decoder's output.
 
@@ -27,12 +27,12 @@ class VAELoss(nn.Module):
         ----------
         x_pred: torch.Tensor [N, ...]
             The outputs of the decoder (batch size N).
-        x_true: torch.Tensor [N, ...]
-            The target outputs of the decoder.
         mu: torch.Tensor [N, D]
             The output for the means from the encoder (dimensionality D).
         logvar: torch.Tensor [N, D]
             The output for the log-values of the diagonal entries of the covariance matrix.
+        x_true: torch.Tensor [N, ...]
+            The target outputs for the decoder.
 
         Returns
         -------

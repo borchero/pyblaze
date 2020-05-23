@@ -1,11 +1,7 @@
 import torch
 import torch.nn.functional as F
 
-def gumbel_softmax(logits: torch.Tensor,
-                   tau: float = 1,
-                   hard: bool = False,
-                   eps: float = 1e-10,
-                   dim: int = -1):
+def gumbel_softmax(logits: torch.Tensor, tau=1, hard=False, eps=1e-10, dim=-1):
     """
     Numerically stable version of PyTorch's builtin Gumbel softmax.
 

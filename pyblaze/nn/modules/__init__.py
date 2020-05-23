@@ -1,3 +1,4 @@
+from .distribution import TransformedNormalLoss
 from .gp import GradientPenalty
 from .lstm import StackedLSTM, StackedLSTMCell
 from .normalizing import NormalizingFlow

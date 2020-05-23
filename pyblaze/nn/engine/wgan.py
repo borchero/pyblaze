@@ -58,7 +58,7 @@ class WGANEngine(Engine):
         means of regularization should be preferred.
     """
 
-    def __init__(self, model, ignore_target=False):
+    def __init__(self, model, expects_data_target=False):
         """
         Initializes a new engine for training a WGAN.
 
@@ -66,12 +66,12 @@ class WGANEngine(Engine):
         ----------
         model: torch.nn.Module
             The WGAN to train.
-        ignore_target: bool, default: False
+        expects_data_target: bool, default: False
             When this value is set to `True`, the real data instances passed to this engine are
             expected to yield class labels. These are simply discarded.
         """
         super().__init__(model)
-        self.ignore_target = ignore_target
+        self.expects_data_target = expects_data_target
 
     def train_batch(self, data,
                     generator_optimizer=None, critic_optimizer=None,
@@ -128,6 +128,6 @@ class WGANEngine(Engine):
         return 0
 
     def _get_real(self, real):
-        if self.ignore_target:
+        if self.expects_data_target:
             return real[0]
         return real

@@ -11,13 +11,21 @@ The functional module provides free functions that are missing from PyTorch.
     :local:
     :depth: 1
 
-Functions
----------
+General Functions
+-----------------
 
 Gumbel
 ^^^^^^
 
 .. autofunction:: pyblaze.nn.functional.gumbel_softmax
+
+Probability Distributions
+-------------------------
+
+Normal Distribution
+^^^^^^^^^^^^^^^^^^^
+
+.. autofunction:: pyblaze.nn.functional.log_prob_standard_normal
 
 Metrics
 -------
