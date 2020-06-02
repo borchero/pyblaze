@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 import torch.nn.init as init
@@ -232,9 +233,10 @@ class RadialTransform(_Transform):
         Resets this module's parameters. All parameters are sampled from a standard Normal
         distribution.
         """
-        init.normal_(self.reference)
-        init.normal_(self.alpha_prime)
-        init.normal_(self.beta_prime)
+        std = 1 / math.sqrt(self.reference.size(0))
+        init.uniform_(self.reference, -std, std)
+        init.uniform_(self.alpha_prime, -std, std)
+        init.uniform_(self.beta_prime, -std, std)
 
     def forward(self, z):
         """
@@ -256,7 +258,7 @@ class RadialTransform(_Transform):
         beta = -alpha + F.softplus(self.beta_prime)  # [1]
 
         diff = z - self.reference  # [N, D]
-        r = diff.norm(p=2, dim=-1, keepdim=True)  # [N, 1]
+        r = diff.norm(dim=-1, keepdim=True)  # [N, 1]
         h = (alpha + r).reciprocal()  # [N]
         beta_h = beta * h  # [N]
         y = z + beta_h * diff  # [N, D]
@@ -265,5 +267,104 @@ class RadialTransform(_Transform):
         log_det_lhs = (self.dim - 1) * beta_h.log1p()  # [N]
         log_det_rhs = (beta_h + beta * h_d * r).log1p()  # [N, 1]
         log_det = (log_det_lhs + log_det_rhs).view(-1)  # [N]
+
+        return y, log_det
+
+################################################################################
+### AFFINE COUPLING
+################################################################################
+
+class AffineCouplingTransform(_Transform):
+    r"""
+    An affine coupling transforms the input by splitting it into two parts and transforming the
+    second part by an arbitrary function depending on the first part. It was introduced in
+    "Density Estimation Using Real NVP" (Dinh et. al, 2017). It computes the following function for
+    :math:`\mathbf{z} \in \mathbb{R}^D` and a dimension :math:`d < D`:
+
+    .. math::
+
+        f_{\mathbf{\omega}_s, \mathbf{\omega}_m}(\mathbf{z}) =
+            [\mathbf{z}_{1:d}, \mathbf{z}_{d+1:D} \odot
+            \exp(g_{\mathbf{\omega}_s}(\mathbf{z}_{1:d})) +
+            h_{\mathbf{\omega}_m}(\mathbf{z}_{1:d})]^T
+
+
+    with :math:`g, h: \mathbb{R}^d \rightarrow \mathbb{R}^{D-d}` being arbitrary parametrized
+    functions (e.g. neural networks) computing the log-scale and the translation, respectively.
+
+    The log-determinant of its Jacobian is given as follows:
+
+    .. math::
+
+        \sum_{k=1}^{D-d}{g_{\mathbf{\omega}_s}(\mathbf{z}_{1:d})}
+
+
+    This transform is invertible and the inverse computation will be added in the future.
+
+    Note
+    ----
+    As only part of the input is transformed, consider using this class with the :code:`reverse`
+    flag set alternately.
+    """
+
+    def __init__(self, dim, fixed_dim, net, reverse=False):
+        """
+        Initializes a new affine coupling transformation.
+
+        Parameters
+        ----------
+        dim: int
+            The dimensionality of the input.
+        fixed_dim: int
+            The dimensionality of the input space that is not transformed. Must be smaller than the
+            dimension.
+        net: torch.nn.Module [N, D] -> ([N, A], [N, A])
+            An arbitrary neural network taking as input the fixed part of the input and outputting
+            a mean and a log scale used for scaling and translating the affine part of the input,
+            respectively (batch size N, fixed dimension D, affine dimension A).
+        reverse: bool, default: False
+            Whether to keep the second part fixed instead of the first one.
+        """
+        super().__init__(dim)
+
+        if fixed_dim >= dim:
+            raise ValueError("fixed_dim must be smaller than dim")
+
+        self.fixed_dim = fixed_dim
+        self.reverse = reverse
+
+        self.net = net
+
+    def forward(self, z):
+        """
+        Transforms the given input.
+
+        Parameters
+        ----------
+        z: torch.Tensor [N, D]
+            The given input (batch size N, transform dimensionality D).
+
+        Returns
+        -------
+        torch.Tensor [N, D]
+            The transformed input.
+        torch.Tensor [N]
+            The log-determinants of the Jacobian evaluated at z.
+        """
+        if self.reverse:
+            z2, z1 = z.split(self.fixed_dim, dim=-1)
+        else:
+            z1, z2 = z.split(self.fixed_dim, dim=-1)
+
+        mean, logscale = self.net(z1)
+        logscale = logscale.tanh()
+        transformed = z2 * logscale.exp() + mean
+
+        if self.reverse:
+            y = torch.cat([transformed, z1], dim=-1)
+        else:
+            y = torch.cat([z1, transformed], dim=-1)
+
+        log_det = logscale.sum(-1)
 
         return y, log_det

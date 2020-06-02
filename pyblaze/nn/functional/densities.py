@@ -9,14 +9,14 @@ def log_prob_standard_normal(x):
 
     Parameters
     ----------
-    x: torch.Tensor [N, D]
-        The samples whose log-probability shall be computed (number of samples N, dimensionality D).
+    x: torch.Tensor [..., D]
+        The samples whose log-probability shall be computed (dimensionality D).
 
     Returns
     -------
-    torch.Tensor [N]
+    torch.Tensor [...]
         The log-probabilities for all samples.
     """
-    dim = x.size(1)
+    dim = x.size(-1)
     const = dim * math.log(2 * math.pi)
     return -0.5 * (const + (x * x).sum(-1))
