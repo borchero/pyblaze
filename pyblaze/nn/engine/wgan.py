@@ -61,7 +61,8 @@ class WGANEngine(Engine):
         means of regularization should be preferred.
     kwargs: keyword arguments
         Additional keyword arguments. If they start with 'generator\_', they will be passed only to
-        the generator, the same applies to keywords starting with 'critic\_'.
+        the generator, the same applies to keywords starting with 'critic\_'. When passed to the
+        model, the prefixes are dropped.
 
     Note
     ----
@@ -154,6 +155,12 @@ class WGANEngine(Engine):
         return real
 
     def _get_kwargs(self, **kwargs):
-        generator_kwargs = {k: v for k, v in kwargs.items() if not k.startswith('critic_')}
-        critic_kwargs = {k: v for k, v in kwargs.items() if not k.startswith('generator_')}
+        generator_kwargs = {
+            k if not k.startswith('critic_') else k[7:]: v
+            for k, v in kwargs.items() if not k.startswith('critic_')
+        }
+        critic_kwargs = {
+            k if not k.startswith('generator_') else k[10:]: v
+            for k, v in kwargs.items() if not k.startswith('generator_')
+        }
         return generator_kwargs, critic_kwargs
