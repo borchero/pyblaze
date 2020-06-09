@@ -29,8 +29,8 @@ class Residual(nn.Module):
         super().__init__()
 
         self.w1 = nn.Linear(dim, hidden_dim, bias=bias)
-        self.w2 = nn.Linear(hidden_dim, dim, bias=bias)
         self.activation = activation
+        self.w2 = nn.Linear(hidden_dim, dim, bias=bias)
 
     def forward(self, x):
         """
