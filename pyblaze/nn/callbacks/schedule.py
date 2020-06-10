@@ -35,7 +35,7 @@ class ParameterScheduler(ValueTrainingCallback):
     training.
     """
 
-    def __init__(self, initial, schedule, **kwargs):
+    def __init__(self, initial, schedule, *args, **kwargs):
         r"""
         Initalizes a new scheduler for the given parameter.
 
@@ -49,11 +49,14 @@ class ParameterScheduler(ValueTrainingCallback):
             the parameter, the current epoch, and the iteration within the epoch. The function is
             called after every iteration (i.e. batch). It is further passed the arguments given to
             this initializer.
-        kwargs: keyword arguments
+        args: variadic argument
             Additional arguments passed to the :code:`schedule` function.
+        kwargs: keyword arguments
+            Additional keyword arguments passed to the :code:`schedule` function.
         """
         self.parameter = initial
         self.schedule = schedule
+        self.args = args
         self.kwargs = kwargs
         self.epoch = None
         self.iteration = None
@@ -79,4 +82,6 @@ class ParameterScheduler(ValueTrainingCallback):
         self.iteration = None
 
     def _update(self):
-        self.parameter = self.schedule(self.parameter, self.epoch, self.iteration, **self.kwargs)
+        self.parameter = self.schedule(
+            self.parameter, self.epoch, self.iteration, *self.args, **self.kwargs
+        )

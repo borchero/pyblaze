@@ -156,11 +156,11 @@ class WGANEngine(Engine):
 
     def _get_kwargs(self, **kwargs):
         generator_kwargs = {
-            k if not k.startswith('critic_') else k[7:]: v
+            k[10:] if k.startswith('generator_') else k: v
             for k, v in kwargs.items() if not k.startswith('critic_')
         }
         critic_kwargs = {
-            k if not k.startswith('generator_') else k[10:]: v
+            k[7:] if k.startswith('critic_') else k: v
             for k, v in kwargs.items() if not k.startswith('generator_')
         }
         return generator_kwargs, critic_kwargs
