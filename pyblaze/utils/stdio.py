@@ -2,48 +2,117 @@ import os
 import sys
 import time
 import datetime
-import numpy as np
+import math
 
 _ERASE_LINE = '\x1b[2K'
 
 class ProgressBar:
     """
-    The progress bar can be used to print progress for a specific task where N work items have to
-    be processed. The progress bar also measures the execution time and provides an estimated
-    remaining time for the  operation.
+    The progress bar can be used to print progress for a specific task where either a specified
+    number of work items or an iterable has to be processed. The progress bar also measures the
+    execution time and provides an estimated remaining time for the operation. A common use case
+    for the progress bar are for-loops where one work item is completed per iteration.
 
-    A common use case for the progress bar are for-loops where one work item is completed per
-    iteration. The progress bar is intended to be used either from within a with statement or a
-    for-loop.
+    Examples
+    --------
+
+    .. code-block:: python
+        :caption: Iterate over a range of integers
+
+        for i in ProgressBar(4): # equivalently initialized as ProgressBar(range(4))
+            time.sleep(2.5)
+
+    .. code-block:: none
+
+        [                              ] (0.0%) ETA n/a [Elapsed 0:00:00]
+        [=======>                      ] (25.0%) ETA 0:00:07 [Elapsed 0:00:02]
+        [==============>               ] (50.0%) ETA 0:00:05 [Elapsed 0:00:05]
+        [=====================>        ] (75.0%) ETA 0:00:02 [Elapsed 0:00:07]
+        [==============================] (100.0%) ETA 0:00:00 [Elapsed 0:00:10]
+        [Elapsed 0:00:10 | 0.40 it/s]
+
+    .. code-block:: python
+        :caption: Iterate over an iterable of known length
+
+        l = [1, 5, 7]
+        for i in ProgressBar(l):
+            time.sleep(2.5)
+
+    .. code-block:: none
+
+        [                              ] (0.0%) ETA n/a [Elapsed 0:00:00]
+        [=========>                    ] (33.3%) ETA 0:00:05 [Elapsed 0:00:02]
+        [===================>          ] (66.7%) ETA 0:00:02 [Elapsed 0:00:05]
+        [==============================] (100.0%) ETA 0:00:00 [Elapsed 0:00:07]
+        [Elapsed 0:00:07 | 0.40 it/s]
+
+    .. code-block:: python
+        :caption: Iterate over an iterable of unknown size
+
+        it = (x + 1 for x in range(3))
+        for i in ProgressBar(it):
+            time.sleep(1.5)
+
+    .. code-block:: none
+
+        [0.00 it/s] (0 iterations) ETA n/a [Elapsed 0:00:00]
+        [0.67 it/s] (1 iterations) ETA n/a [Elapsed 0:00:01]
+        [0.67 it/s] (2 iterations) ETA n/a [Elapsed 0:00:03]
+        [0.67 it/s] (3 iterations) ETA n/a [Elapsed 0:00:04]
+        [Elapsed 0:00:04 | 0.67 it/s]
+
+    .. code-block:: python
+        :caption: Visualize some complex manual progress
+
+        with ProgressBar() as p:
+            time.sleep(3)
+            p.step()
+            for _ in range(10):
+                time.sleep(0.1)
+                p.step()
+            for _ in range(5):
+                time.sleep(0.4)
+                p.step()
+
+    .. code-block:: none
+
+        [0.00 it/s] (0 iterations) ETA n/a [Elapsed 0:00:00]
+        [0.33 it/s] (1 iterations) ETA n/a [Elapsed 0:00:03]
+        [0.64 it/s] (2 iterations) ETA n/a [Elapsed 0:00:03]
+        [0.94 it/s] (3 iterations) ETA n/a [Elapsed 0:00:03]
+        [1.21 it/s] (4 iterations) ETA n/a [Elapsed 0:00:03]
+        [1.47 it/s] (5 iterations) ETA n/a [Elapsed 0:00:03]
+        [1.71 it/s] (6 iterations) ETA n/a [Elapsed 0:00:03]
+        [1.94 it/s] (7 iterations) ETA n/a [Elapsed 0:00:03]
+        [2.15 it/s] (8 iterations) ETA n/a [Elapsed 0:00:03]
+        [2.36 it/s] (9 iterations) ETA n/a [Elapsed 0:00:03]
+        [2.55 it/s] (10 iterations) ETA n/a [Elapsed 0:00:03]
+        [2.73 it/s] (11 iterations) ETA n/a [Elapsed 0:00:04]
+        [2.71 it/s] (12 iterations) ETA n/a [Elapsed 0:00:04]
+        [2.69 it/s] (13 iterations) ETA n/a [Elapsed 0:00:04]
+        [2.68 it/s] (14 iterations) ETA n/a [Elapsed 0:00:05]
+        [2.66 it/s] (15 iterations) ETA n/a [Elapsed 0:00:05]
+        [2.65 it/s] (16 iterations) ETA n/a [Elapsed 0:00:06]
+        [Elapsed 0:00:06 | 2.65 it/s]
     """
 
-    @staticmethod
-    def frac(num, denom):
-        """
-        Initializes a new progress bar with ceil(num/denom) work items.
-
-        Parameters
-        ----------
-        num: int
-            Numerator of the fraction.
-        denom: int
-            Denominator of the fraction.
-
-        Returns
-        -------
-        pyblaze.utils.ProgressBar
-            The progress bar.
-        """
-        return ProgressBar(int(np.ceil(num / denom)))
-
-    def __init__(self, total, file=None, verbose=True):
+    ########################################################################################
+    ### INITIALIZATION
+    ########################################################################################
+    def __init__(self, iterable=None, denom=None, file=None, verbose=True):
         """
         Initializes a new progress bar with the given number of work items.
 
         Parameters
         ----------
-        total: int
-            The number of work items to be processed.
+        iterable: int or iterable, default: None
+            Either the number of work items to be processed or an iterable whose values are returned
+            when iterating over this progress bar. If no value is given, this iterable can not be
+            used within for-loops.
+        denom: int, default: None
+            If the first parameter is an integer, this value may also be given. In that case, the
+            first parameter acts as the numerator and the second parameter as the denominator. The
+            rounded up division of these two values is used as the number of work items.
         file: str, default: None
             If given, defines the file where the progress bar should write to instead of the
             command line. Intermediate directories are created automatically.
@@ -51,28 +120,53 @@ class ProgressBar:
             Whether to actually log anything. This is useful in cases where logging should be
             turned of dynamically without introducing additional control flow.
         """
+        if not (denom is None or (isinstance(denom, int) and isinstance(iterable, int))):
+            raise ValueError("If second parameter is given, first parameter must be integer.")
+
         self.verbose = verbose
-        self.current = 0
-        self.total = total
-        self.tic = None
-        self._counter = None
-        self.latest_print_length = None
         if file is not None:
             os.makedirs(file, exist_ok=True)
             self.stream = open(file, 'a+')
         else:
             self.stream = sys.stdout
 
+        if iterable is None:
+            self.iterable = None
+        elif hasattr(iterable, '__iter__'):
+            self.iterable = iterable
+        elif isinstance(iterable, int) and denom is not None:
+            self.iterable = range(math.ceil(iterable / denom))
+        elif isinstance(iterable, int):
+            self.iterable = range(iterable)
+        else:
+            raise ValueError(
+                f"First parameter must be iterable or integer but found {type(iterable)}."
+            )
+
+        self.haslength = hasattr(self.iterable, '__len__')
+        if self.haslength:
+            self.iteration_max = len(self.iterable)
+
+        self._iteration_count = 0
+        self._start_time = None
+        self._latest_print_length = None
+
+    ########################################################################################
+    ### INSTANCE METHODS
+    ########################################################################################
     def start(self):
         """
         Starts to record the progress of the operation. Time measuring is initiated and the
         beginning of the operation is indicated on the command line.
 
-        This method should never be called explicitly. It is implicitly called at the beginning of
-        a with statement.
+        Note
+        ----
+        This method should usually not be called explicitly. It is implicitly called at the
+        beginning of a :code:`with` statement.
         """
-        self.tic = time.time()
-        self.latest_print_length = 0
+        self._iteration_count = 0
+        self._start_time = time.time()
+        self._latest_print_length = 0
         self._print_progress(compute_eta=False)
 
     def step(self):
@@ -83,20 +177,21 @@ class ProgressBar:
         If used from within a with statement, this method must be called explicitly, otherwise, it
         should not be called.
         """
-        self.current += 1
+        self._iteration_count += 1
         self._print_progress()
 
-    def finish(self, metrics=None):
+    def finish(self, kv=None):
         """
         Stops the progress bar and prints the total duration of the operation. If metrics are given,
         these will be printed along with the duration.
 
-        If metrics are given, this method must be called explicitly, otherwise, it is implicitly
-        called at the end of a with statement or for loop.
+        If key value pairs are given, this method must be called explicitly, otherwise, it is
+        implicitly called at the end of a with statement or for loop.
 
         Note
         ----
-        Do not call this method multiple times.
+        If this method is called mutliple times with not calls to :meth:`start` in between, all but
+        the first call are no-ops.
 
         Parameters
         ----------
@@ -104,56 +199,64 @@ class ProgressBar:
             The metrics to print as key-value pairs. Usually, they provide more information about
             the operation whose progress has been tracked.
         """
-        if metrics is None:
-            metrics = {}
-        self._print_done(metrics)
-        self.tic = None
-        self.latest_print_length = None
+        if self._start_time is None:
+            return
+        if kv is None:
+            kv = {}
+        self._print_done(kv)
+        self._start_time = None
+        self._latest_print_length = None
 
+    ########################################################################################
+    ### SPECIAL METHODS
+    ########################################################################################
     def __enter__(self):
         self.start()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if self.tic is not None:
-            self.finish()
+        self.finish()
         return False
 
     def __iter__(self):
-        return self
+        if self.iterable is None:
+            raise ValueError("ProgressBar must be given an iterable if used within a for-loop.")
 
-    def __next__(self):
-        if self._counter is None:
-            self.start()
-            self._counter = 0
-            return self._counter
+        self.start()
+        it = iter(self.iterable)
+        try:
+            while True:
+                yield next(it)
+                self.step()
+        except StopIteration:
+            self.finish()
 
-        if self._counter < self.total - 1:
-            self.step()
-            self._counter += 1
-            return self._counter
-
-        self.finish()
-        raise StopIteration
-
+    ########################################################################################
+    ### PRIVATE METHODS
+    ########################################################################################
     def _print_progress(self, compute_eta=True):
         if not self.verbose:
             return
 
-        perc = self.current / self.total
-        p = int(np.round(perc * 30))
-        progress = "" if p == 0 else "=" * (p - 1) + ">" if p < 30 else "=" * 30
-        whitespace = " " * (30 - p)
-        elapsed = time.time() - self.tic
+        elapsed = time.time() - self._start_time
         elapsed_time = datetime.timedelta(0, int(elapsed))
-        if compute_eta:
-            eta = datetime.timedelta(0, int((1 - perc) / perc * elapsed))
-        else:
-            eta = 'n/a'
 
-        text = " [{}{}] ({:02.1%}) ETA {} [Elapsed {}]".format(
-            progress, whitespace, perc, eta, elapsed_time
-        )
+        if self.haslength:
+            perc = self._iteration_count / self.iteration_max
+            p = int(round(perc * 30))
+            pbar = "" if p == 0 else "=" * (p - 1) + ">" if p < 30 else "=" * 30
+            whitespace = " " * (30 - p)
+            progress = f"[{pbar}{whitespace}] ({perc:02.1%})"
+            if compute_eta:
+                eta = datetime.timedelta(0, int((1 - perc) / perc * elapsed))
+            else:
+                eta = "n/a"
+        else:
+            it_per_sec = self._iteration_count / elapsed
+            progress = f"[{it_per_sec:.2f} it/s] ({self._iteration_count:,} iterations)"
+            eta = "n/a"
+
+        text = " {} ETA {} [Elapsed {}]".format(progress, eta, elapsed_time)
         print(f"{_ERASE_LINE}{self._pad_whitespace(text)}", end='\r', file=self.stream)
         self.stream.flush()
 
@@ -161,7 +264,10 @@ class ProgressBar:
         if not self.verbose:
             return
 
-        elapsed = datetime.timedelta(0, int(time.time() - self.tic))
+        elapsed = time.time() - self._start_time
+        elapsed_time = datetime.timedelta(0, int(elapsed))
+        it_per_sec = self._iteration_count / elapsed
+
         m_strings = []
         for k, v in sorted(metrics.items(), key=lambda k: k[0]):
             split = k.split('__')
@@ -171,14 +277,17 @@ class ProgressBar:
                 f = '{:.5f}'
             string = f'{split[0]}: {f}'.format(v)
             m_strings += [string]
-        text = " [Elapsed {}] {}".format(elapsed, ", ".join(m_strings))
+
+        text = " [Elapsed {} | {:,.2f} it/s] {}".format(
+            elapsed_time, it_per_sec, ", ".join(m_strings)
+        )
         print(f"{_ERASE_LINE}{self._pad_whitespace(text)}", file=self.stream)
-        self.latest_print_length = 0
+        self._latest_print_length = 0
         self.stream.flush()
 
     def _pad_whitespace(self, text):
-        diff = self.latest_print_length - len(text)
-        self.latest_print_length = max(len(text), self.latest_print_length)
+        diff = self._latest_print_length - len(text)
+        self._latest_print_length = max(len(text), self._latest_print_length)
         if diff > 0:
             return text + " " * diff
         return text

@@ -28,16 +28,15 @@ Config
 .. autoclass:: pyblaze.nn.Config
     :members:
 
-Trainining History
-------------------
+Training History
+----------------
 
 .. autoclass:: pyblaze.nn.engine._history.History
     :members:
     :exclude-members: __init__, before_training, after_training, after_batch, after_epoch
 
-Terminal Output
----------------
+Progress
+--------
 
-.. automodule:: pyblaze.utils.stdio
+.. autoclass:: pyblaze.utils.ProgressBar
     :members:
-    :exclude-members: ensure_valid_directories
