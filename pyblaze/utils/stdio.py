@@ -183,7 +183,9 @@ class ProgressBar:
     def finish(self, kv=None):
         """
         Stops the progress bar and prints the total duration of the operation. If metrics are given,
-        these will be printed along with the duration.
+        these will be printed along with the elapsed time and the number of iterations per second.
+        Metrics may be provided in the form :code:`<name>__<format specifier>` to e.g. format
+        floating point numbers with a fixed number of decimal points.
 
         If key value pairs are given, this method must be called explicitly, otherwise, it is
         implicitly called at the end of a with statement or for loop.
