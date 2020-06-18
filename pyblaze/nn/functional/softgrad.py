@@ -37,4 +37,3 @@ def softround(x):
     """
     x_ = x.detach()
     return x_.round() - x_ + x
-
