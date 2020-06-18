@@ -215,7 +215,7 @@ class ProgressBar:
         text = " {} ETA {} [Elapsed {} | {:,.2f} it/s]".format(
             progress, eta, elapsed_time, it_per_sec
         )
-        print(f"{_ERASE_LINE}{self._pad_whitespace(text)}", end='\n', file=self.stream)
+        print(f"{_ERASE_LINE}{self._pad_whitespace(text)}", end='\r', file=self.stream)
         self.stream.flush()
 
     def _print_done(self, metrics):
