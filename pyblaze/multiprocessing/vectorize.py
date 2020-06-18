@@ -99,9 +99,8 @@ class Vectorizer:
                 target=_batch_worker,
                 args=(
                     queue, done, tick_queue, i,
-                    self.worker_func, self.worker_init,
-                    self.init_kwargs, items[splits[i]:splits[i+1]],
-                    *args
+                    self.worker_func, self.worker_init, self.init_kwargs,
+                    items[splits[i]:splits[i+1]], *args
                 )
             )
             process.daemon = True
