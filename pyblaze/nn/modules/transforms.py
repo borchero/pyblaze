@@ -274,7 +274,7 @@ class RadialTransform(_Transform):
 ### AFFINE COUPLING
 ################################################################################
 
-class AffineCouplingTransform(_Transform):
+class AffineCouplingTransform1d(_Transform):
     r"""
     An affine coupling transforms the input by splitting it into two parts and transforming the
     second part by an arbitrary function depending on the first part. It was introduced in
@@ -342,7 +342,7 @@ class AffineCouplingTransform(_Transform):
         Parameters
         ----------
         z: torch.Tensor [N, D]
-            The given input (batch size N, transform dimensionality D).
+            The given input (batch size N, dimensionality D).
 
         Returns
         -------

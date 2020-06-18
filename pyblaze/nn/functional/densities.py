@@ -1,4 +1,5 @@
 import math
+import torch
 
 def log_prob_standard_normal(x):
     """
@@ -19,4 +20,5 @@ def log_prob_standard_normal(x):
     """
     dim = x.size(-1)
     const = dim * math.log(2 * math.pi)
-    return -0.5 * (const + (x * x).sum(-1))
+    norm = torch.einsum('ij,ij->i', x, x)
+    return -0.5 * (const + norm)

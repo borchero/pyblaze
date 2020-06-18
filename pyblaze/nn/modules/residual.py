@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-class Residual(nn.Module):
+class LinearResidual(nn.Module):
     """
     Residual module that models a two-layer MLP with nonlinearity and adds the input to the output:
 

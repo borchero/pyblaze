@@ -27,10 +27,10 @@ Stacked LSTM Cell
 .. autoclass:: pyblaze.nn.StackedLSTMCell
     :members:
 
-Residual
+Linear Residual
 ^^^^^^^^
 
-.. autoclass:: pyblaze.nn.Residual
+.. autoclass:: pyblaze.nn.LinearResidual
     :members:
 
 View
@@ -94,4 +94,10 @@ Radial Transform
 ^^^^^^^^^^^^^^^^
 
 .. autoclass:: pyblaze.nn.RadialTransform
+    :members:
+
+Affine Coupling Transform 1D
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: pyblaze.nn.AffineCouplingTransform1d
     :members:

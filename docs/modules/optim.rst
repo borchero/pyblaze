@@ -1,8 +1,11 @@
 Optimizers
 ==========
 
-This module implements optimizers that have not (yet) been added to PyTorch itself. Its members are
-available in the :code:`pyblaze.optim` namespace.
+.. code::python
+
+    import pyblaze.optim as xoptim
+
+The optim module provides optimizers that have noy (yet) been added to PyTorch itself.
 
 .. contents::
     :local:
