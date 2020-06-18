@@ -19,6 +19,11 @@ Gumbel
 
 .. autofunction:: pyblaze.nn.functional.gumbel_softmax
 
+Soft Round
+^^^^^^^^^^
+
+.. autofunction:: pyblaze.nn.functional.softround
+
 Probability Distributions
 -------------------------
 
