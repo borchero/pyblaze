@@ -28,3 +28,12 @@ def gumbel_softmax(logits: torch.Tensor, tau=1, hard=False, eps=1e-10, dim=-1):
         y_hard = torch.zeros_like(logits).scatter_(dim, index, 1.0)
         return y_hard - y_soft.detach() + y_soft
     return y_soft
+
+
+def softround(x):
+    """
+    Rounds the input by using :code:`torch.round` but does enable passing gradients. This is
+    achieved in a similar fashion as for the Gumbel softmax.
+    """
+    x_ = x.detach()
+    return x_.round() - x_ + x

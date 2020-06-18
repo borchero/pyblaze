@@ -242,6 +242,7 @@ class ProgressBar:
 
         elapsed = time.time() - self._start_time
         elapsed_time = datetime.timedelta(0, int(elapsed))
+        it_per_sec = self._iteration_count / elapsed
 
         if self.haslength:
             perc = self._iteration_count / self.iteration_max
@@ -254,11 +255,12 @@ class ProgressBar:
             else:
                 eta = "n/a"
         else:
-            it_per_sec = self._iteration_count / elapsed
-            progress = f"[{it_per_sec:.2f} it/s] ({self._iteration_count:,} iterations)"
+            progress = f"[{self._iteration_count:,} iterations]"
             eta = "n/a"
 
-        text = " {} ETA {} [Elapsed {}]".format(progress, eta, elapsed_time)
+        text = " {} ETA {} [Elapsed {} | {:,.2f} it/s]".format(
+            progress, eta, elapsed_time, it_per_sec
+        )
         print(f"{_ERASE_LINE}{self._pad_whitespace(text)}", end='\r', file=self.stream)
         self.stream.flush()
 
