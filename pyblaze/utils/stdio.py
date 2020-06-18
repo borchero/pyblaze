@@ -22,15 +22,6 @@ class ProgressBar:
         for i in ProgressBar(4): # equivalently initialized as ProgressBar(range(4))
             time.sleep(2.5)
 
-    .. code-block:: none
-
-        [                              ] (0.0%) ETA n/a [Elapsed 0:00:00]
-        [=======>                      ] (25.0%) ETA 0:00:07 [Elapsed 0:00:02]
-        [==============>               ] (50.0%) ETA 0:00:05 [Elapsed 0:00:05]
-        [=====================>        ] (75.0%) ETA 0:00:02 [Elapsed 0:00:07]
-        [==============================] (100.0%) ETA 0:00:00 [Elapsed 0:00:10]
-        [Elapsed 0:00:10 | 0.40 it/s]
-
     .. code-block:: python
         :caption: Iterate over an iterable of known length
 
@@ -38,28 +29,12 @@ class ProgressBar:
         for i in ProgressBar(l):
             time.sleep(2.5)
 
-    .. code-block:: none
-
-        [                              ] (0.0%) ETA n/a [Elapsed 0:00:00]
-        [=========>                    ] (33.3%) ETA 0:00:05 [Elapsed 0:00:02]
-        [===================>          ] (66.7%) ETA 0:00:02 [Elapsed 0:00:05]
-        [==============================] (100.0%) ETA 0:00:00 [Elapsed 0:00:07]
-        [Elapsed 0:00:07 | 0.40 it/s]
-
     .. code-block:: python
         :caption: Iterate over an iterable of unknown size
 
         it = (x + 1 for x in range(3))
         for i in ProgressBar(it):
             time.sleep(1.5)
-
-    .. code-block:: none
-
-        [0.00 it/s] (0 iterations) ETA n/a [Elapsed 0:00:00]
-        [0.67 it/s] (1 iterations) ETA n/a [Elapsed 0:00:01]
-        [0.67 it/s] (2 iterations) ETA n/a [Elapsed 0:00:03]
-        [0.67 it/s] (3 iterations) ETA n/a [Elapsed 0:00:04]
-        [Elapsed 0:00:04 | 0.67 it/s]
 
     .. code-block:: python
         :caption: Visualize some complex manual progress
@@ -73,27 +48,6 @@ class ProgressBar:
             for _ in range(5):
                 time.sleep(0.4)
                 p.step()
-
-    .. code-block:: none
-
-        [0.00 it/s] (0 iterations) ETA n/a [Elapsed 0:00:00]
-        [0.33 it/s] (1 iterations) ETA n/a [Elapsed 0:00:03]
-        [0.64 it/s] (2 iterations) ETA n/a [Elapsed 0:00:03]
-        [0.94 it/s] (3 iterations) ETA n/a [Elapsed 0:00:03]
-        [1.21 it/s] (4 iterations) ETA n/a [Elapsed 0:00:03]
-        [1.47 it/s] (5 iterations) ETA n/a [Elapsed 0:00:03]
-        [1.71 it/s] (6 iterations) ETA n/a [Elapsed 0:00:03]
-        [1.94 it/s] (7 iterations) ETA n/a [Elapsed 0:00:03]
-        [2.15 it/s] (8 iterations) ETA n/a [Elapsed 0:00:03]
-        [2.36 it/s] (9 iterations) ETA n/a [Elapsed 0:00:03]
-        [2.55 it/s] (10 iterations) ETA n/a [Elapsed 0:00:03]
-        [2.73 it/s] (11 iterations) ETA n/a [Elapsed 0:00:04]
-        [2.71 it/s] (12 iterations) ETA n/a [Elapsed 0:00:04]
-        [2.69 it/s] (13 iterations) ETA n/a [Elapsed 0:00:04]
-        [2.68 it/s] (14 iterations) ETA n/a [Elapsed 0:00:05]
-        [2.66 it/s] (15 iterations) ETA n/a [Elapsed 0:00:05]
-        [2.65 it/s] (16 iterations) ETA n/a [Elapsed 0:00:06]
-        [Elapsed 0:00:06 | 2.65 it/s]
     """
 
     ########################################################################################
@@ -261,7 +215,7 @@ class ProgressBar:
         text = " {} ETA {} [Elapsed {} | {:,.2f} it/s]".format(
             progress, eta, elapsed_time, it_per_sec
         )
-        print(f"{_ERASE_LINE}{self._pad_whitespace(text)}", end='\r', file=self.stream)
+        print(f"{_ERASE_LINE}{self._pad_whitespace(text)}", end='\n', file=self.stream)
         self.stream.flush()
 
     def _print_done(self, metrics):
