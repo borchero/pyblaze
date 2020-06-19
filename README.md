@@ -56,11 +56,6 @@ implement the `train_batch` and `eval_batch` methods to specify how to perform t
 evaluation, respectively, for a single batch of data. Consult the documentation of
 `pyblaze.nn.Engine` to read about all methods available for override.
 
-## Quickstart
-
-An introduction to PyBlaze is given as a tutorial training an image classifier. It can be found in
-the documentation's [guide section](https://pyblaze.borchero.com/guides/supervised.html).
-
 ## License
 
 PyBlaze is licensed under the [MIT License](LICENSE).
