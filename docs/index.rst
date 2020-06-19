@@ -66,14 +66,14 @@ and evaluation, respectively, for a single batch of data. Consult the documentat
     examples/classifier
     examples/multiprocessing
 
-.. .. toctree::
-..     :glob:
-..     :maxdepth: 1
-..     :caption: Generative Models
+.. toctree::
+    :glob:
+    :maxdepth: 1
+    :caption: Generative Models (WIP)
 
-..     guides/vae
-..     guides/wgan
-..     guides/normalizing-flows
+    examples/vae
+    examples/wgan
+    examples/normalizing-flows
 
 .. toctree::
     :glob:
