@@ -13,19 +13,10 @@ well as the :code:`utils` module.
     :local:
     :depth: 1
 
-Neural Networks
----------------
-
 Estimator
-^^^^^^^^^
+---------
 
 .. autoclass:: pyblaze.nn.Estimator
-    :members:
-
-Config
-^^^^^^
-
-.. autoclass:: pyblaze.nn.Config
     :members:
 
 Training History

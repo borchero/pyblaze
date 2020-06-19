@@ -1,6 +1,5 @@
-import copy
 import torch
-import pyblaze.nn as xnn
+import torch.jit as jit
 from pyblaze.utils.stdio import ensure_valid_directories
 from .base import TrainingCallback
 
@@ -34,15 +33,11 @@ class ModelSaverCallback(TrainingCallback):
 
     def after_epoch(self, metrics):
         file = self.file_template.format(self.epoch)
-        if isinstance(self.model, xnn.Configurable):
-            self.model.save(file)
+        ensure_valid_directories(file)
+        if isinstance(self.model, jit.ScriptModule):
+            self.model.save(f'{file}.jit')
         else:
-            ensure_valid_directories(file)
-            state_dict = copy.deepcopy(self.model.state_dict())
-            result = {}
-            for k, v in state_dict.items():
-                result[k] = v.cpu()
-            torch.save(result, f'{file}.pt')
+            torch.save(self.model.state_dict(), f'{file}.pt')
         self.epoch = None
 
     def after_training(self):
