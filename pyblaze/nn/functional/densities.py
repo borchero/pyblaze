@@ -10,8 +10,8 @@ def log_prob_standard_normal(x):
 
     Parameters
     ----------
-    x: torch.Tensor [..., D]
-        The samples whose log-probability shall be computed (dimensionality D).
+    x: torch.Tensor [N, D]
+        The samples whose log-probability shall be computed (number of samples N, dimensionality D).
 
     Returns
     -------

@@ -146,6 +146,9 @@ class WGANEngine(Engine):
     def eval_batch(self, data):
         raise NotImplementedError("Evaluation is not available for arbitrary GANs")
 
+    def predict_batch(self, noise):
+        return self.model.generator(noise)
+
     ################################################################################
     ### PRIVATE
     ################################################################################
