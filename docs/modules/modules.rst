@@ -28,7 +28,7 @@ Stacked LSTM Cell
     :members:
 
 Linear Residual
-^^^^^^^^
+^^^^^^^^^^^^^^^
 
 .. autoclass:: pyblaze.nn.LinearResidual
     :members:
