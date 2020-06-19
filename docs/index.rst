@@ -58,13 +58,13 @@ implement the :meth:`train_batch` and :meth:`eval_batch` methods to specify how 
 and evaluation, respectively, for a single batch of data. Consult the documentation of
 :class:`pyblaze.nn.Engine` to read about all methods available for override.
 
-.. .. toctree::
-..     :glob:
-..     :maxdepth: 1
-..     :caption: Basics
+.. toctree::
+    :glob:
+    :maxdepth: 1
+    :caption: Basics
 
-..     guides/classifier
-..     guides/multiprocessing
+    examples/classifier
+    examples/multiprocessing
 
 .. .. toctree::
 ..     :glob:
