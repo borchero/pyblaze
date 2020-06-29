@@ -3,11 +3,17 @@
 ![PyPi](https://img.shields.io/pypi/v/pyblaze?label=version)
 ![License](https://img.shields.io/github/license/borchero/pyblaze?label=license)
 
-PyBlaze is a high-level library for large-scale machine an deep learning in
+PyBlaze is an unobtrusive, high-level library for large-scale machine and deep learning in
 [PyTorch](https://pytorch.org). It is engineered to cut obsolete boilerplate code while preserving
 the flexibility of PyTorch to create just about any deep learning model.
 
-## Installation
+## Quickstart
+
+Plenty of tutorial are available in the [official documentation](https://pyblaze.borchero.com/).
+The most basic tutorial builds a
+[classifier for CIFAR10](https://pyblaze.borchero.com/examples/classifier.html).
+
+### Installation
 
 PyBlaze is available on PyPi and can simply be installed as follows:
 
