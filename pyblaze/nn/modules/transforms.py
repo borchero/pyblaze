@@ -349,7 +349,8 @@ class AffineCouplingTransform1d(_Transform):
             The given input (batch size N, dimensionality D).
         condition: torch.Tensor [N, C]
             An optional tensor on which this layer's net is conditioned. This value will be
-            concatenated with the part of :code:`z` that is passed to this layer's net.
+            concatenated with the part of :code:`z` that is passed to this layer's net (condition
+            dimension C).
 
         Returns
         -------

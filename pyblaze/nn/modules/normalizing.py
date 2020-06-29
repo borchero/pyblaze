@@ -21,7 +21,7 @@ class NormalizingFlow(nn.Module):
         super().__init__()
         self.transforms = nn.ModuleList(transforms)
 
-    def forward(self, z):
+    def forward(self, z, condition=None):
         """
         Computes the outputs and log-detemrinants for the given samples after applying this flow's
         transformations.
@@ -30,6 +30,9 @@ class NormalizingFlow(nn.Module):
         ----------
         z: torch.Tensor [N, D]
             The input value (batch size N, dimensionality D).
+        condition: torch.Tensor [N, C]
+            An additional condition vector on which the transforms are conditioned. Causes failure
+            if any of the underlying transforms does not support conditioning.
 
         Returns
         -------
@@ -40,10 +43,11 @@ class NormalizingFlow(nn.Module):
         """
         batch_size = z.size(0)
         device = z.device
+        kwargs = {'condition': condition} if condition is not None else {}
 
         log_det_sum = torch.zeros(batch_size, device=device)
         for transform in self.transforms:
-            z, log_det = transform(z)
+            z, log_det = transform(z, **kwargs)
             log_det_sum += log_det
 
         return z, log_det_sum
