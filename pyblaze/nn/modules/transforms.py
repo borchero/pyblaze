@@ -299,6 +299,8 @@ class AffineCouplingTransform1d(_Transform):
         \sum_{k=1}^{D-d}{g_{\mathbf{\omega}_s}(\mathbf{z}_{1:d})}
 
 
+    Additionally, this transform can be easily conditioned on another input variable
+    :math:`\mathbf{x}` by conditioning the functions :math:`g, h` on it.
     This transform is invertible and the inverse computation will be added in the future.
 
     Note
@@ -318,10 +320,12 @@ class AffineCouplingTransform1d(_Transform):
         fixed_dim: int
             The dimensionality of the input space that is not transformed. Must be smaller than the
             dimension.
-        net: torch.nn.Module [N, D] -> ([N, A], [N, A])
+        net: torch.nn.Module [N, F] -> ([N, A], [N, A])
             An arbitrary neural network taking as input the fixed part of the input and outputting
             a mean and a log scale used for scaling and translating the affine part of the input,
-            respectively (batch size N, fixed dimension D, affine dimension A).
+            respectively. In case this affine coupling is used with conditioning, the net's input
+            dimension should be modified accordingly (batch size N, fixed dimension F, affine
+            dimension A).
         reverse: bool, default: False
             Whether to keep the second part fixed instead of the first one.
         """
@@ -335,7 +339,7 @@ class AffineCouplingTransform1d(_Transform):
 
         self.net = net
 
-    def forward(self, z):
+    def forward(self, z, condition=None):
         """
         Transforms the given input.
 
@@ -343,6 +347,9 @@ class AffineCouplingTransform1d(_Transform):
         ----------
         z: torch.Tensor [N, D]
             The given input (batch size N, dimensionality D).
+        condition: torch.Tensor [N, C]
+            An optional tensor on which this layer's net is conditioned. This value will be
+            concatenated with the part of :code:`z` that is passed to this layer's net.
 
         Returns
         -------
@@ -356,7 +363,12 @@ class AffineCouplingTransform1d(_Transform):
         else:
             z1, z2 = z.split(self.fixed_dim, dim=-1)
 
-        mean, logscale = self.net(z1)
+        if condition is None:
+            x = z1
+        else:
+            x = torch.cat([z1, condition], dim=1)
+
+        mean, logscale = self.net(x)
         logscale = logscale.tanh()
         transformed = z2 * logscale.exp() + mean
 
