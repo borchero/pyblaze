@@ -320,7 +320,10 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
             self.model.to('cpu', non_blocking=True)
             self.device = None
 
-        return {key: forward(metric, evals).item() for key, metric in metrics.items()}
+        return {
+            key: self._process_metric(forward(metric, evals))
+            for key, metric in metrics.items()
+        }
 
     ################################################################################
     ### PREDICTIONS
@@ -596,6 +599,13 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
         if isinstance(ref, (list, tuple)):
             return tuple(torch.cat([v[i] for v in items]) for i in range(len(ref)))
         return torch.cat(items)
+
+    def _process_metric(self, metric):
+        if isinstance(metric, torch.Tensor):
+            if metric.numel() == 1:
+                return metric.item()
+            return metric
+        return metric
 
 
 def _strip_metrics(metrics):
