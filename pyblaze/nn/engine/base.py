@@ -596,8 +596,9 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
         ref = items[0]
         if isinstance(ref, dict):
             return {key: torch.cat([v[key] for v in items]) for key in ref.keys()}
+        # recursive call of _collate for a more generic functionality
         if isinstance(ref, (list, tuple)):
-            return tuple(torch.cat([v[i] for v in items]) for i in range(len(ref)))
+            return tuple(self._collate([v[i] for v in items]) for i in range(len(ref)))
         return torch.cat(items)
 
     def _process_metric(self, metric):
