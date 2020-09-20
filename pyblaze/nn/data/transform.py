@@ -23,6 +23,9 @@ class TransformDataset(Dataset):
         self.source = source
         self.transforms = transforms
 
+    def __len__(self):
+        return len(self.source)
+
     def __getitem__(self, index):
         item = self.source[index]
         for transform in self.transforms:
