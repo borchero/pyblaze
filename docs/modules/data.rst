@@ -48,6 +48,11 @@ Noise
     :inherited-members:
     :exclude-members: loader, split, random_split
 
+.. autoclass:: pyblaze.nn.LabeledNoiseDataset
+    :members:
+    :inherited-members:
+    :exclude-members: loader, split, random_split
+
 Data Loaders
 ------------
 
