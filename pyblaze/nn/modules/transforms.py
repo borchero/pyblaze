@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
+from .made import MADE
 
 # pylint: disable=abstract-method
 class _Transform(nn.Module):
@@ -17,9 +18,7 @@ class _Transform(nn.Module):
     def __repr__(self):
         return f'{self.__class__.__name__}(dim={self.dim})'
 
-################################################################################
-### AFFINE TRANSFORM
-################################################################################
+#--------------------------------------------------------------------------------------------------
 
 class AffineTransform(_Transform):
     r"""
@@ -92,9 +91,7 @@ class AffineTransform(_Transform):
 
         return y, log_det
 
-################################################################################
-### PLANAR TRANSFORM
-################################################################################
+#--------------------------------------------------------------------------------------------------
 
 class PlanarTransform(_Transform):
     r"""
@@ -142,9 +139,10 @@ class PlanarTransform(_Transform):
         """
         Resets this module's parameters. All parameters are sampled uniformly from [0, 1].
         """
-        init.uniform_(self.u)
-        init.uniform_(self.w)
-        init.uniform_(self.bias)
+        std = 1 / math.sqrt(self.u.size(0))
+        init.uniform_(self.u, -std, std)
+        init.uniform_(self.w, -std, std)
+        init.uniform_(self.bias, -std, std)
 
     def forward(self, z):
         """
@@ -177,9 +175,7 @@ class PlanarTransform(_Transform):
 
         return y, log_det
 
-################################################################################
-### RADIAL TRANSFORM
-################################################################################
+#--------------------------------------------------------------------------------------------------
 
 class RadialTransform(_Transform):
     r"""
@@ -270,9 +266,7 @@ class RadialTransform(_Transform):
 
         return y, log_det
 
-################################################################################
-### AFFINE COUPLING
-################################################################################
+#--------------------------------------------------------------------------------------------------
 
 class AffineCouplingTransform1d(_Transform):
     r"""
@@ -309,7 +303,7 @@ class AffineCouplingTransform1d(_Transform):
     flag set alternately.
     """
 
-    def __init__(self, dim, fixed_dim, net, reverse=False):
+    def __init__(self, dim, fixed_dim, net, reverse=False, constrain_scale=False):
         """
         Initializes a new affine coupling transformation.
 
@@ -320,14 +314,17 @@ class AffineCouplingTransform1d(_Transform):
         fixed_dim: int
             The dimensionality of the input space that is not transformed. Must be smaller than the
             dimension.
-        net: torch.nn.Module [N, F] -> ([N, A], [N, A])
+        net: torch.nn.Module [N, F] -> [N, F*2]
             An arbitrary neural network taking as input the fixed part of the input and outputting
             a mean and a log scale used for scaling and translating the affine part of the input,
-            respectively. In case this affine coupling is used with conditioning, the net's input
-            dimension should be modified accordingly (batch size N, fixed dimension F, affine
-            dimension A).
+            respectively, as a single tensor which will be split. In case this affine coupling is
+            used with conditioning, the net's input dimension should be modified accordingly (batch
+            size N, fixed dimension F).
         reverse: bool, default: False
             Whether to keep the second part fixed instead of the first one.
+        constrain_scale: bool, default: False
+            Whether to constrain the scale parameter that the output is multiplied by. This should
+            be set for deep normalizing flows where no batch normalization is used.
         """
         super().__init__(dim)
 
@@ -336,6 +333,7 @@ class AffineCouplingTransform1d(_Transform):
 
         self.fixed_dim = fixed_dim
         self.reverse = reverse
+        self.constrain_scale = constrain_scale
 
         self.net = net
 
@@ -369,8 +367,9 @@ class AffineCouplingTransform1d(_Transform):
         else:
             x = torch.cat([z1, condition], dim=1)
 
-        mean, logscale = self.net(x)
-        logscale = logscale.tanh()
+        mean, logscale = self.net(x).chunk(2, dim=1)
+        if self.constrain_scale:
+            logscale = logscale.tanh()
         transformed = z2 * logscale.exp() + mean
 
         if self.reverse:
@@ -381,3 +380,166 @@ class AffineCouplingTransform1d(_Transform):
         log_det = logscale.sum(-1)
 
         return y, log_det
+
+#--------------------------------------------------------------------------------------------------
+
+class MaskedAutoregressiveTransform1d(_Transform):
+    r"""
+    1-dimensional Masked Autogressive Transform as introduced in
+    `Masked Autoregressive Flow for Density Estimation <https://arxiv.org/abs/1705.07057>`_
+    (Papamakarios et al., 2018).
+    """
+
+    def __init__(self, dim, *hidden_dims, reverse=False, activation=nn.LeakyReLU(),
+                 constrain_scale=False, seed=0):
+        """
+        Initializes a new MAF transform that is backed by a :class:`pyblaze.nn.MADE` model.
+
+        Parameters
+        ----------
+        dim: int
+            The dimension of the inputs.
+        hidden_dims: varargs of int
+            The hidden dimensions of the MADE model.
+        reverse: bool, default: False
+            Whether to flip the input. Should be set alternately when stacking multiple MAF
+            transforms.
+        activation: torch.nn.Module, default: torch.nn.LeakyReLU()
+            The activation function to use in the MADE model.
+        constrain_scale: bool, default: False
+            Whether to constrain the scale parameter that the output is multiplied by. This should
+            be set for deep normalizing flows where no batch normalization is used.
+        seed: int, default: 0
+            The seed to use for computing the MADE model's mask. Should be set to different values
+            if stacking multiple MAF transforms.
+        """
+        super().__init__(dim)
+
+        self.reverse = reverse
+        self.constrain_scale = constrain_scale
+
+        self.net = MADE(dim, *hidden_dims, dim * 2, activation=activation, seed=seed)
+        self.bn = nn.BatchNorm1d(dim)
+
+    def forward(self, x):
+        """
+        Transforms the given input.
+
+        Parameters
+        ----------
+        z: torch.Tensor [N, D]
+            The given input (batch size N, dimensionality D).
+
+        Returns
+        -------
+        torch.Tensor [N, D]
+            The transformed input.
+        torch.Tensor [N]
+            The log-determinants of the Jacobian evaluated at z.
+        """
+        x = x.flip(-1) if self.reverse else x
+        mean, logscale = self.net(x).chunk(2, dim=1)
+        if self.constrain_scale:
+            logscale = logscale.tanh()
+        z = x * logscale.exp() + mean
+        log_det = logscale.sum(-1)
+        return z, log_det
+
+#--------------------------------------------------------------------------------------------------
+
+class BatchNormTransform1d(_Transform):
+    r"""
+    1-dimensional Batch Normalization layer for stabilizing deep normalizing flows. It was
+    first introduced in `Density Estimation Using Real NVP <https://arxiv.org/pdf/1605.08803.pdf>`_
+    (Dinh et al., 2017).
+    """
+
+    def __init__(self, dim, eps=1e-5, momentum=0.1):
+        """
+        Initializes a new batch normalization layer for one-dimensional vectors of the given
+        dimension.
+
+        Parameters
+        ----------
+        dim: int
+            The dimension of the inputs.
+        eps: float, default: 1e-5
+            A small value added in the denominator for numerical stability.
+        momentum: float, default: 0.1
+            Value used for calculating running average statistics.
+        """
+        super().__init__(dim)
+
+        self.momentum = momentum
+        self.eps = eps
+
+        self.log_gamma = nn.Parameter(torch.empty(dim))
+        self.beta = nn.Parameter(torch.empty(dim))
+
+        self.register_buffer('running_mean', torch.zeros(dim))
+        self.register_buffer('running_var', torch.ones(dim))
+
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        """
+        Resets this module's parameters.
+        """
+        init.zeros_(self.log_gamma) # equal to `init.ones_(self.gamma)`
+        init.zeros_(self.beta)
+
+    def forward(self, z):
+        """
+        Transforms the given input.
+
+        Note
+        ----
+        During testing, inputs that highly differ from the inputs seen during testing, this module
+        is generally prone to outputting non-finite float values. In that case, these inputs are
+        considered to be "impossible" to observe: the transformed output is set to all zeros and
+        the log-determinant is set to :code:`-inf`.
+
+        Parameters
+        ----------
+        z: torch.Tensor [N, D]
+            The given input (batch size N, dimensionality D).
+
+        Returns
+        -------
+        torch.Tensor [N, D]
+            The transformed input.
+        torch.Tensor [N]
+            The log-determinants of the Jacobian evaluated at z.
+        """
+        batch_size = z.size(0)
+
+        if self.training:
+            mean = z.mean(0)
+            var = z.var(0, unbiased=True)
+
+            # Use the .data property to prevent gradients from accumulating in the running stats
+            self.running_mean.mul_(self.momentum).add_(mean.data * (1 - self.momentum))
+            self.running_var.mul_(self.momentum).add_(var.data * (1 - self.momentum))
+        else:
+            mean = self.running_mean
+            var = self.running_var
+
+        # normalize input
+        x = (z - mean) / (var + self.eps).sqrt()
+        out = x * self.log_gamma.exp() + self.beta
+
+        # compute log-determinant
+        log_det = self.log_gamma - 0.5 * (var + self.eps).log()
+        # do repeat instead of expand to allow fixing the log_det below
+        log_det = log_det.sum(-1).repeat(batch_size)
+
+        # Fix an error where outputs are completely out of range during evaluation
+        if not self.training:
+            # Find all output rows where at least one value is not finite
+            rows = (~torch.isfinite(out)).sum(1) > 0
+            # Fill these rows with 0 and set the log-determinant to -inf to indicate that they have
+            # a density of exactly 0
+            out[rows].fill_(0)
+            log_det[rows].fill_(float('-inf'))
+
+        return out, log_det

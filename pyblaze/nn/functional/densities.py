@@ -15,10 +15,10 @@ def log_prob_standard_normal(x):
 
     Returns
     -------
-    torch.Tensor [...]
+    torch.Tensor [N]
         The log-probabilities for all samples.
     """
-    dim = x.size(-1)
+    dim = x.size(1)
     const = dim * math.log(2 * math.pi)
     norm = torch.einsum('ij,ij->i', x, x)
     return -0.5 * (const + norm)

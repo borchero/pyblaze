@@ -130,6 +130,11 @@ class MLEEngine(Engine):
         out = forward(self.model, x, **kwargs)
         return self._merge_out_target_x(out, target, x)
 
+    def predict_batch(self, data, **kwargs):
+        x, _ = self._get_x_target(data)
+        out = forward(self.model, x, **kwargs)
+        return out
+
     ################################################################################
     ### PRIVATE
     ################################################################################

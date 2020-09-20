@@ -69,11 +69,17 @@ Gradient Penalty
 .. autoclass:: pyblaze.nn.GradientPenalty
     :members:
 
+Density Estimation
+------------------
+
+Masked Autoencoder
+^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: pyblaze.nn.MADE
+    :members:
+
 Normalizing Flows
 -----------------
-
-Normalizing Flow
-^^^^^^^^^^^^^^^^
 
 .. autoclass:: pyblaze.nn.NormalizingFlow
     :members:
@@ -100,4 +106,16 @@ Affine Coupling Transform 1D
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: pyblaze.nn.AffineCouplingTransform1d
+    :members:
+
+Masked Autoregressive Transform 1D
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: pyblaze.nn.MaskedAutoregressiveTransform1d
+    :members:
+
+BatchNorm Transform 1D
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: pyblaze.nn.BatchNormTransform1d
     :members:

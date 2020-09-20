@@ -2,9 +2,8 @@ import math
 import numpy as np
 import torch.utils.data as data
 
-###############
-### METHODS ###
-###############
+#--------------------------------------------------------------------------------------------------
+
 def loader(self, **kwargs):
     """
     Returns a data loader for this dataset. If the dataset defines a :code:`collate_fn` function,
@@ -24,6 +23,33 @@ def loader(self, **kwargs):
     if hasattr(self, 'collate_fn'):
         kwargs['collate_fn'] = self.collate_fn
     return data.DataLoader(self, **kwargs)
+
+
+def split(self, condition):
+    """
+    Splits the dataset according to the given boolean condition. When :code:`pyblaze.nn` is
+    imported, this method is available on all :code:`torch.utils.data.Dataset` objects.
+
+    Attention
+    ---------
+    Do not call this method on iterable datasets.
+
+    Parameters
+    ----------
+    condition: callable (object) -> bool
+        The condition which splits the dataset.
+
+    Returns
+    -------
+    torch.utils.data.Subset
+        The dataset with the items for which the condition evaluated to `true`.
+    torch.utils.data.Subset
+        The dataset with the items for which the condition evaluated to `false`.
+    """
+    filter_ = np.array([condition(item) for item in self])
+    true_indices = np.where(filter_)[0]
+    false_indices = np.where(~filter_)[0]
+    return data.Subset(self, true_indices), data.Subset(self, false_indices)
 
 
 def random_split(self, *sizes, seed=None):
@@ -74,8 +100,8 @@ def random_split(self, *sizes, seed=None):
         data.Subset(self, indices) for indices in index_choices
     ]
 
-##################
-### EXTENSIONS ###
-##################
+#--------------------------------------------------------------------------------------------------
+
 data.Dataset.loader = loader
+data.Dataset.split = split
 data.Dataset.random_split = random_split
