@@ -539,7 +539,7 @@ class BatchNormTransform1d(_Transform):
             rows = (~torch.isfinite(out)).sum(1) > 0
             # Fill these rows with 0 and set the log-determinant to -inf to indicate that they have
             # a density of exactly 0
-            out[rows].fill_(0)
-            log_det[rows].fill_(float('-inf'))
+            out[rows] = (0)
+            log_det[rows] = float('-inf')
 
         return out, log_det
