@@ -222,7 +222,9 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
                     train_data, iterations=val_iterations, metrics=metrics,
                     callbacks=prediction_callbacks, gpu=None, **eval_kwargs
                 )
-                epoch_metrics = {**epoch_metrics, **{f'train_{k}': v for k, v in eval_val.items()}}
+                epoch_metrics = {
+                    **epoch_metrics, **{f'train_{k}': v for k, v in eval_train.items()}
+                }
 
             # 2.4) Finish epoch
             try:
