@@ -134,6 +134,27 @@ def roc_auc_score(y_pred, y_true):
     )
 
 
+def pr_auc_score(y_pred, y_true):
+    """
+    Computes the area under the precision-recall curve.
+
+    Parameters
+    ----------
+    y_pred: torch.FloatTensor [N]
+        The (binary) predictions made by the model.
+    y_true: torch.LongTensor [N]
+        The actual classes.
+
+    Returns
+    -------
+    torch.FloatTensor
+        The PR-AUC score.
+    """
+    prec, rec, _ = metrics.precision_recall_curve(y_true.numpy(), y_pred.numpy())
+    auc = metrics.auc(rec, prec)
+    return torch.as_tensor(auc)
+
+
 def average_precision(y_pred, y_true):
     """
     Computes the average precision of the model predictions.
