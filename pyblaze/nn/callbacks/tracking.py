@@ -2,14 +2,15 @@ from torch.utils.tensorboard import SummaryWriter
 from .base import TrainingCallback
 
 
-class AbstractTracker(TrainingCallback):
+class Tracker(TrainingCallback):
     """
-    Abstract class for implementing a tracking callback using
-    tracking frameworks which already include step-counters (e.g. for epochs)
-    when logging metrics, e.g. NeptuneTracker or tracking with sacred
+    Abstract class for implementing a tracking callback using tracking frameworks which already
+    include step-counters (e.g. for epochs) when logging metrics, e.g. NeptuneTracker or tracking
+    with sacred.
     """
 
     def __init__(self, experiment):
+        super().__init__()
         self.experiment = experiment
 
     def after_batch(self, train_loss):
@@ -27,17 +28,20 @@ class AbstractTracker(TrainingCallback):
             self.log_metric(k, v)
 
     def log_metric(self, name, val):
+        """
+        Logs the given value for the specified metric.
+        """
         raise NotImplementedError
 
 
-class AbstractCounterTracker(TrainingCallback):
+class CounterTracker(TrainingCallback):
     """
-    Abstract class for implementing a tracking callback for
-    tracking frameworks which require passing the step-count (e.g. epoch)
-    e.g. when tracking with tensorboard
+    Abstract class for implementing a tracking callback for tracking frameworks which require
+    passing the step-count (e.g. epoch) e.g. when tracking with tensorboard.
     """
+
     def __init__(self, writer):
-        super(AbstractCounterTracker, self).__init__()
+        super().__init__()
         self.writer = writer
         self.batch_counter = None
         self.epoch_counter = None
@@ -63,10 +67,13 @@ class AbstractCounterTracker(TrainingCallback):
         self.epoch_counter += 1
 
     def log_metric(self, name, val, step):
+        """
+        Logs the given value for the specified metric at the given step.
+        """
         raise NotImplementedError
 
 
-class NeptuneTracker(AbstractTracker):
+class NeptuneTracker(Tracker):
     """
     The Neptune tracker can be used to track experiments with https://neptune.ai. As soon as metrics
     are available they are logged to the experiment that this tracker is managing. It requires
@@ -85,7 +92,7 @@ class NeptuneTracker(AbstractTracker):
         self.experiment.log_metric(name, val)
 
 
-class SacredTracker(AbstractTracker):
+class SacredTracker(Tracker):
     """
     SimpleTracker which works together with Sacred. By using a NeptuneObserver, this
     tracker also allows for tracking the experiments with https://neptune.ai (see above)
@@ -103,7 +110,7 @@ class SacredTracker(AbstractTracker):
         self.experiment.log_scalar(name, val)
 
 
-class TensorboardTracker(AbstractCounterTracker):
+class TensorboardTracker(CounterTracker):
     """
     The tensorboard tracker can be used to track experiments with tensorboard. The summary writer
     is available as `writer` property on the tracker.
