@@ -10,8 +10,9 @@ def accuracy(y_pred, y_true):
     y_pred: torch.LongTensor [N] or torch.FloatTensor [N, C]
         The class predictions made by the model. Can be either specific classes or predictions for
         each class.
-    y_true: torch.LongTensor [N]
-        The actual classes.
+    y_true: torch.LongTensor [N] or torch.FloatTensor [N, C]
+        The actual classes, either given as indices or one-hot vectors (more specifically, it may
+        be any vector whose row-wise argmax values yield the class labels).
 
     Returns
     -------
@@ -19,6 +20,7 @@ def accuracy(y_pred, y_true):
         The accuracy.
     """
     y_pred = _ensure_classes(y_pred)
+    y_true = _ensure_classes(y_true)
     return (y_pred == y_true).float().mean()
 
 
@@ -180,8 +182,8 @@ def average_precision(y_pred, y_true):
 
 
 def _ensure_classes(y):
-    assert y.dim() <= 2, \
-        f"Invalid dimensionality {y.dim()} of predictions."
+    if y.dim() <= 2:
+        return y
 
     if y.dim() == 2:
         return torch.argmax(y, dim=-1)
