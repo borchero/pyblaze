@@ -182,7 +182,7 @@ def average_precision(y_pred, y_true):
 
 
 def _ensure_classes(y):
-    if y.dim() <= 2:
+    if y.dim() < 2:
         return y
 
     if y.dim() == 2:
