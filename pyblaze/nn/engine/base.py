@@ -211,18 +211,22 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
                 current_epoch % eval_every == 0 or current_epoch == epochs - 1
 
             if val_data is not None and do_val:
-                eval_val = self.evaluate(
+                eval_metrics = self.evaluate(
                     val_data, iterations=val_iterations, metrics=val_metrics,
                     callbacks=prediction_callbacks, gpu=None, **eval_kwargs
                 )
-                epoch_metrics = {**epoch_metrics, **{f'val_{k}': v for k, v in eval_val.items()}}
+                epoch_metrics = {
+                    **epoch_metrics, **{f'val_{k}': v for k, v in eval_metrics.items()}
+                }
 
             if eval_train and do_val:
-                eval_train = self.evaluate(
+                eval_metrics = self.evaluate(
                     train_data, iterations=val_iterations, metrics=metrics,
                     callbacks=prediction_callbacks, gpu=None, **eval_kwargs
                 )
-                epoch_metrics = {**epoch_metrics, **{f'train_{k}': v for k, v in eval_val.items()}}
+                epoch_metrics = {
+                    **epoch_metrics, **{f'train_{k}': v for k, v in eval_metrics.items()}
+                }
 
             # 2.4) Finish epoch
             try:

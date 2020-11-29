@@ -2,7 +2,7 @@ import torch
 import matplotlib.pyplot as plt
 
 def density_plot2d(callback, x_range=(-1, 1), y_range=(-1, 1), resolution=500,
-                   cmap='Blues', threshold=None, **kwargs):
+                   cmap='Blues', threshold=None, ax=None, **kwargs):
     """
     Generates a scatter plot visualizing a distribution's density in the given 2D region.
 
@@ -23,6 +23,9 @@ def density_plot2d(callback, x_range=(-1, 1), y_range=(-1, 1), resolution=500,
         The matplotlib colorbar to use for visualization.
     threshold: float, default: None
         A minimum value that needs to be surpassed in order for a scatter point to be plotted.
+    ax: matplotlib.axes, default: None
+        The axis to use for plotting or None if the global imperative API of matplotlib should be
+        used.
     kwargs: keyword arguments
         Additional arguments passed to the :code:`scatter` method.
     """
@@ -41,4 +44,6 @@ def density_plot2d(callback, x_range=(-1, 1), y_range=(-1, 1), resolution=500,
         mask = torch.ones(values.shape[0], dtype=torch.bool)
 
     vis_points = measure_points[mask].numpy().T
+    if ax is not None:
+        return ax.scatter(*vis_points, c=values[mask], cmap=cmap, **kwargs)
     return plt.scatter(*vis_points, c=values[mask], cmap=cmap, **kwargs)
