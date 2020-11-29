@@ -379,11 +379,11 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
             model = self.model
 
         # 4) Now perform predictions
-        if (isinstance(gpu, list) and len(gpu) > 1) or not gpu:
+        if parallel and ((isinstance(gpu, list) and len(gpu) > 1) or not gpu):
             # parallel computation
-            if parallel and isinstance(gpu, list):
+            if isinstance(gpu, list):
                 num_workers = len(gpu)
-            elif parallel and isinstance(gpu, bool):
+            elif isinstance(gpu, bool):
                 # number of CPU cores
                 num_workers = -1
             else:
