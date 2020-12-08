@@ -1,6 +1,9 @@
 from torch.utils.tensorboard import SummaryWriter
 from .base import TrainingCallback
-
+try:
+    import wandb
+except ModuleNotFoundError:
+    pass
 
 class Tracker(TrainingCallback):
     """
@@ -8,10 +11,6 @@ class Tracker(TrainingCallback):
     include step-counters (e.g. for epochs) when logging metrics, e.g. NeptuneTracker or tracking
     with sacred.
     """
-
-    def __init__(self, experiment):
-        super().__init__()
-        self.experiment = experiment
 
     def after_batch(self, train_loss):
         if isinstance(train_loss, (list, tuple)):
@@ -88,6 +87,9 @@ class NeptuneTracker(Tracker):
             The experiment to log for.
     """
 
+    def __init__(self, experiment):
+        self.experiment = experiment
+
     def log_metric(self, name, val):
         self.experiment.log_metric(name, val)
 
@@ -105,6 +107,9 @@ class SacredTracker(Tracker):
         experiment: sacred.Experiment
             The experiment to log for.
     """
+
+    def __init__(self, experiment):
+        self.experiment = experiment
 
     def log_metric(self, name, val):
         self.experiment.log_scalar(name, val)
@@ -129,3 +134,12 @@ class TensorboardTracker(CounterTracker):
 
     def log_metric(self, name, val, step):
         self.writer.add_scalar(name, val, step)
+
+
+class WandbTracker(Tracker):
+    """
+    The wandb tracker allows tracking experiments with https://www.wandb.com/.
+    """
+
+    def log_metric(self, name, val):
+        wandb.log({name: val})
