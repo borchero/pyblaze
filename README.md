@@ -9,7 +9,7 @@ the flexibility of PyTorch to create just about any deep learning model.
 
 ## Quickstart
 
-Plenty of tutorial are available in the [official documentation](https://pyblaze.borchero.com/).
+Plenty of tutorials are available in the [official documentation](https://pyblaze.borchero.com/).
 The most basic tutorial builds a
 [classifier for CIFAR10](https://pyblaze.borchero.com/examples/classifier.html).
 
