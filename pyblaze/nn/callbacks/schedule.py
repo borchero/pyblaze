@@ -6,7 +6,7 @@ class LearningRateScheduler(TrainingCallback):
     automatically triggered after the end of every iteration or epoch.
     """
 
-    def __init__(self, scheduler, after_batch=False):
+    def __init__(self, scheduler, metric=None, after_batch=False):
         """
         Initializes a new learning rate scheduler for the given PyTorch scheduler.
 
@@ -14,18 +14,29 @@ class LearningRateScheduler(TrainingCallback):
         ----------
         scheduler: torch.optim.lr_scheduler
             The PyTorch scheduler.
+        metric: str, default: None
+            The metric to pass to the scheduler, e.g. useful for reducing the learning rate as the
+            validation loss pleateaus. Typically, it should only be used with :code:`after_batch`
+            set to `False`.
         after_batch: bool, default: False
             Whether to call the scheduler after every batch or after every epoch.
         """
         self.exec_after_batch = after_batch
+        self.metric = metric
         self.scheduler = scheduler
 
     def after_batch(self, metrics):
         if self.exec_after_batch:
-            self.scheduler.step()
+            self._exec(metrics)
 
     def after_epoch(self, metrics):
         if not self.exec_after_batch:
+            self._exec(metrics)
+
+    def _exec(self, metrics):
+        if self.metric is not None:
+            self.scheduler.step(metrics[self.metric])
+        else:
             self.scheduler.step()
 
 
