@@ -3,7 +3,6 @@ from collections import defaultdict
 import torch
 import torch.nn as nn
 import torch.cuda as cuda
-import pyblaze.multiprocessing as xmp
 from pyblaze.nn.callbacks import TrainingCallback, PredictionCallback, CallbackException, \
     ValueTrainingCallback
 import pyblaze.nn.utils as xnnu
@@ -22,9 +21,8 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
     independent, identically distributed data samples) and/or model types (e.g. GANs).
     """
 
-    ################################################################################
-    ### ENGINE CONFIGURATION
-    ################################################################################
+    #----------------------------------------------------------------------------------------------
+    # ENGINE CONFIGURATION
     def supports_multiple_gpus(self):
         """
         Returns whether the engine allows multiple GPUs to be used during training. By default, it
@@ -37,9 +35,8 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
         """
         return True
 
-    ################################################################################
-    ### INITIALIZATION
-    ################################################################################
+    #----------------------------------------------------------------------------------------------
+    # INITIALIZATION
     def __init__(self, model):
         """
         Initializes a new engine for a specified model.
@@ -54,9 +51,8 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
         self._cache = {}
         self._iteration = None
 
-    ################################################################################
-    ### TRAINING
-    ################################################################################
+    #----------------------------------------------------------------------------------------------
+    # TRAINING
     # pylint: disable=too-many-branches,too-many-statements
     def train(self, train_data, val_data=None, epochs=20, val_iterations=None, eval_every=None,
               eval_train=False, eval_val=True, callbacks=None, metrics=None, gpu='auto', **kwargs):
@@ -196,7 +192,7 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
                     **{k: v.read() for k, v in dynamic_train_kwargs.items()}
                 }
                 item = next(train_iterator)
-                item = to_device(self.device, item)
+                item = self.to_device(self.device, item)
                 loss = self.train_batch(item, **train_kwargs)
                 batch_losses.append(loss)
                 self._exec_callbacks(train_callbacks, 'after_batch', _strip_metrics(loss))
@@ -251,9 +247,8 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
 
         return history
 
-    ################################################################################
-    ### EVALUATION
-    ################################################################################
+    #----------------------------------------------------------------------------------------------
+    # EVALUATION
     def evaluate(self, data, iterations=None, metrics=None, callbacks=None, gpu='auto', **kwargs):
         """
         Evaluates the model on the given data and computes the supplied metrics.
@@ -308,12 +303,12 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
         iterator = iter(data)
         for _ in range(num_predictions):
             item = next(iterator)
-            item = to_device(self.device, item)
+            item = self.to_device(self.device, item)
 
             with torch.no_grad():
                 eval_out = self.eval_batch(item, **kwargs)
 
-            evals.append(to_device('cpu', eval_out))
+            evals.append(self.to_device('cpu', eval_out))
             self._exec_callbacks(callbacks, 'after_batch', None)
 
         self._exec_callbacks(callbacks, 'after_predictions')
@@ -329,10 +324,9 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
             for key, metric in metrics.items()
         }
 
-    ################################################################################
-    ### PREDICTIONS
-    ################################################################################
-    def predict(self, data, iterations=None, callbacks=None, gpu='auto', parallel=True, **kwargs):
+    #----------------------------------------------------------------------------------------------
+    # PREDICTIONS
+    def predict(self, data, iterations=None, callbacks=None, gpu='auto', **kwargs):
         """
         Computes predictions for the given samples.
 
@@ -353,10 +347,6 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
             multiple GPUs makes up for this overhead. If `False` is specified, all cores of the
             computer are used to make predictions in parallel. In the case of 'auto', all available
             GPUs are used (if any).
-        parallel: bool, default: True
-            Whether to allow predictions to be done in parallel. Normally, you do not need to set
-            this to `False`, unless there is some good reason (e.g. running in a Docker container
-            that does not provide sufficient shared memory).
         kwargs: keyword arguments
             Additional arguments passed directly to the `predict_batch` function.
 
@@ -382,52 +372,27 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
         else:
             model = self.model
 
-        # 4) Now perform predictions
-        if parallel and ((isinstance(gpu, list) and len(gpu) > 1) or not gpu):
-            # parallel computation
-            if isinstance(gpu, list):
-                num_workers = len(gpu)
-            elif isinstance(gpu, bool):
-                # number of CPU cores
-                num_workers = -1
-            else:
-                # execute on main thread otherwise
-                num_workers = 0
+        # 4) Now perform predictions sequentially
+        device = gpu_device(gpu[0] if isinstance(gpu, list) else gpu)
+        model = model.to(device)
 
-            model.share_memory()
-
-            callback = lambda: self._exec_callbacks(callbacks, 'after_batch', None)
-            vectorizer = xmp.Vectorizer(
-                _prediction_worker_func, _prediction_worker_init, callback_func=callback,
-                num_workers=num_workers, gpu=gpu, model=model
-            )
-
-            iterator = iter(data)
-            predictions = vectorizer.process(
-                (next(iterator) for _ in range(num_iterations)), self.predict_batch, kwargs
-            )
-        else:
-            # sequential computation
-            device = gpu_device(gpu[0] if isinstance(gpu, list) else gpu)
-            model = model.to(device)
-
-            predictions = []
-
-            iterator = iter(data)
-            for _ in range(num_iterations):
-                x = next(iterator)
-
-                out = _prediction_worker_func(x, self.predict_batch, kwargs, device)
-                predictions.append(out)
-                self._exec_callbacks(callbacks, 'after_batch', None)
+        predictions = []
+        iterator = iter(data)
+        for _ in range(num_iterations):
+            x = next(iterator)
+            x = self.to_device(device, x)
+            with torch.no_grad():
+                out = self.predict_batch(x, **kwargs)
+            out = self.to_device('cpu', out)
+            predictions.append(out)
+            self._exec_callbacks(callbacks, 'after_batch', None)
 
         self._exec_callbacks(callbacks, 'after_predictions')
 
         return self.collate_predictions(predictions)
 
-    ################################################################################
-    ### BATCH PROCESSING
-    ################################################################################
+    #----------------------------------------------------------------------------------------------
+    # BATCH PROCESSING
     @abstractmethod
     def train_batch(self, data, **kwargs):
         """
@@ -493,9 +458,8 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
         """
         return forward(self.model, data)
 
-    ################################################################################
-    ### COLLATION FUNCTIONS
-    ################################################################################
+    #----------------------------------------------------------------------------------------------
+    # COLLATION FUNCTIONS
     def collate_losses(self, losses):
         """
         Combines the losses obtained from the :meth:`train_batch` method. The default implementation
@@ -573,9 +537,32 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
         """
         return self._collate(predictions)
 
-    ################################################################################
-    ### UTILITY FUNCTIONS
-    ################################################################################
+    #----------------------------------------------------------------------------------------------
+    # OVERRIDABLE UTILITY FUNCTIONS
+    def to_device(self, device, item):
+        """
+        This method moves the given item to the provided device. The default implementation allows
+        for Tensors as well as dicts, lists and tuples of tensors (they may be nested). If you
+        require passing custom datatypes to a device as you feed them to your model or your model
+        outputs them, you may overwrite this method.
+
+        Parameters
+        ----------
+        device: torch.Device or str
+            The device onto which the given item should be moved. May either be an actual device
+            object (such as a GPU) or a string identifying the device (e.g. 'cpu' or 'cuda:0').
+        item: object
+            The item to move.
+
+        Returns
+        -------
+        object
+            The item moved to the given device.
+        """
+        return to_device(device, item)
+
+    #----------------------------------------------------------------------------------------------
+    # UTILITY FUNCTIONS
     def _gpu_descriptor(self, gpu):
         if gpu == 'auto':
             if cuda.device_count() == 0:
@@ -618,13 +605,6 @@ def _strip_metrics(metrics):
     if isinstance(metrics, dict):
         return {k: v for k, v in metrics.items() if not k.startswith('_')}
     return metrics
-
-
-def _prediction_worker_func(item, predict, kwargs, device):
-    x = to_device(device, item)
-    with torch.no_grad():
-        out = predict(x, **kwargs)
-    return to_device('cpu', out)
 
 
 def _prediction_worker_init(rank, gpu, model):

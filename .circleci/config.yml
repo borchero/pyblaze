@@ -1,88 +1,88 @@
 version: 2.1
 
 jobs:
-    lint-code:
-        docker:
-        -   image: borchero/pyblaze:latest
-        steps:
-        -   checkout
-        -   run: pylint pyblaze
-        
-    run-tests:
-        docker:
-        -   image: borchero/pyblaze:latest
-        steps:
-        -   checkout
-        -   run: |
-                pip install -e .
-                python -m unittest tests
+  lint-code:
+    docker:
+      - image: borchero/pyblaze:latest
+    steps:
+      - checkout
+      - run: pylint pyblaze
 
-    deploy-to-pypi:
-        docker:
-        -   image: borchero/pyblaze:latest
-        steps:
-        -   checkout
-        -   run: python setup.py sdist bdist_wheel
-        -   run: twine upload dist/*
+  run-tests:
+    docker:
+      - image: borchero/pyblaze:latest
+    steps:
+      - checkout
+      - run: |
+          pip install -e .
+          python -m unittest tests
 
-    generate-docs:
-        docker:
-        -   image: borchero/pyblaze:latest
-        steps:
-        -   checkout
-        -   run: |
-                sleep 5
-                pip install pyblaze==$CIRCLE_TAG || pip install pyblaze==$CIRCLE_TAG
-                cd docs
-                sphinx-build . build
-        -   persist_to_workspace:
-                root: ~/
-                paths:
-                -   project/docs/build
+  deploy-to-pypi:
+    docker:
+      - image: borchero/pyblaze:latest
+    steps:
+      - checkout
+      - run: python setup.py sdist bdist_wheel
+      - run: twine upload dist/*
 
-    deploy-docs:
-        docker:
-        -   image: borchero/cuckoo:0.4.1
-        steps:
-        -   attach_workspace:
-                at: ~/
-        -   run: |
-                cd ~/project/docs
-                cuckoo auth
-                cuckoo publish \
-                    --dir build \
-                    --bucket pyblaze.borchero.com \
-                    --purge \
-                    --aws-cloudfront-distribution E38JMOFERZBD2Z
+  generate-docs:
+    docker:
+      - image: borchero/pyblaze:latest
+    steps:
+      - checkout
+      - run: |
+          sleep 5
+          pip install pyblaze==$CIRCLE_TAG || pip install pyblaze==$CIRCLE_TAG
+          cd docs
+          sphinx-build . build
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/docs/build
+
+  deploy-docs:
+    docker:
+      - image: borchero/cuckoo:0.4.1
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run: |
+          cd ~/project/docs
+          cuckoo auth
+          cuckoo publish \
+              --dir build \
+              --bucket pyblaze.borchero.com \
+              --purge \
+              --aws-cloudfront-distribution E38JMOFERZBD2Z
 
 workflows:
-    version: 2
-    ci-workflow:
-        jobs:
-        -   lint-code
-        -   run-tests
+  version: 2
+  ci-workflow:
+    jobs:
+      - lint-code
+      - run-tests
 
-    cd-workflow:
-        jobs:
-        -   deploy-to-pypi:
-                filters:
-                    branches:
-                        ignore: /.*/
-                    tags:
-                        only: /.*/
-        -   generate-docs:
-                requires: 
-                -   deploy-to-pypi
-                filters:
-                    branches:
-                        ignore: /.*/
-                    tags:
-                        only: /.*/
-        -   deploy-docs:
-                requires:
-                -   generate-docs
-                filters:
-                    branches:
-                        ignore: /.*/
-                    tags:
-                        only: /.*/
+  cd-workflow:
+    jobs:
+      - deploy-to-pypi:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /.*/
+      - generate-docs:
+          requires:
+            - deploy-to-pypi
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /.*/
+      - deploy-docs:
+          requires:
+            - generate-docs
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /.*/

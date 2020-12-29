@@ -8,14 +8,12 @@ class DataParallel(nn.DataParallel):
     """
 
     def __init__(self, model, device_ids=None, output_device=None, dim=0):
-        super(DataParallel, self).__init__(
-            model, device_ids, output_device, dim
-        )
+        super().__init__(model, device_ids, output_device, dim)
         self._cache = {}
 
     def __getattr__(self, name):
         try:
-            return super(DataParallel, self).__getattr__(name)
+            return super().__getattr__(name)
         except AttributeError:
             value = getattr(self.module, name)
             if isinstance(value, nn.Module):

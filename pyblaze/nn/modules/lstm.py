@@ -217,7 +217,7 @@ class _LSTMCell(nn.Module):
         for p in self.parameters():
             nn.init.uniform_(p, *init_from)
 
-    # pylint: disable=arguments-differ
+    # pylint: disable=arguments-differ,missing-function-docstring
     def forward(self, x_in: torch.Tensor,
                 state: Optional[Tuple[torch.Tensor, torch.Tensor]] = None):
 
