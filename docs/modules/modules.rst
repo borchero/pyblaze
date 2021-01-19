@@ -78,6 +78,18 @@ Masked Autoencoder
 .. autoclass:: pyblaze.nn.MADE
     :members:
 
+Normal Loss
+^^^^^^^^^^^
+
+.. autoclass:: pyblaze.nn.TransformedNormalLoss
+    :members:
+
+GMM Loss
+^^^^^^^^
+
+.. autoclass:: pyblaze.nn.TransformedGmmLoss
+    :members:
+
 Normalizing Flows
 -----------------
 
