@@ -22,3 +22,57 @@ def log_prob_standard_normal(x):
     const = dim * math.log(2 * math.pi)
     norm = torch.einsum('ij,ij->i', x, x)
     return -0.5 * (const + norm)
+
+
+def log_prob_standard_gmm(x, means):
+    """
+    Computes the log-probability of observing the given data under a GMM consisting of
+    (multivariate) standard normal distributions. Each component is assigned the same weight.
+
+    Parameters
+    ----------
+    x: torch.Tensor [N, D]
+        The samples whose log-probability shall be computed (number of samples N,
+        dimensionality D).
+    means: torch.Tensor [M, D]
+        The means of the GMM.
+
+    Returns
+    -------
+    torch.Tensor [N]
+        The log-probabilities for all samples.
+    """
+    num_datapoints, dim = x.size()
+    num_components = means.size(0)
+
+    const = dim * math.log(2 * math.pi)
+    xx = torch.einsum('ij,ij->i', x, x).view(num_datapoints, 1)
+    mm = torch.einsum('ij,ij->i', means, means).view(1, num_components)
+    xm = x.matmul(means.t())
+    log_probs = -0.5 * (const + xx - 2 * xm + mm)
+
+    return torch.logsumexp(log_probs - math.log(num_components), dim=1)
+
+
+def generate_random_gmm(num_components, dim, seed=None):
+    """
+    Generates the means of a GMM with the specified number of components. Each mean is sampled from
+    a standard normal distribution of the given dimension.
+
+    Parameters
+    ----------
+    num_components: int
+        The number of components in the GMM.
+    dim: int
+        The dimensionality of the GMM.
+    seed: int, default: None
+        The seed to use for randomly sampling the components.
+
+    Returns
+    -------
+    torch.Tensor [N, D]
+        The means of the GMM (number of components N, dimensionality D).
+    """
+    generator = torch.Generator().manual_seed(seed)
+    means = torch.randn(num_components, dim, generator=generator)
+    return means

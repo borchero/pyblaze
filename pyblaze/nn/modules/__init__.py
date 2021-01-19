@@ -1,4 +1,4 @@
-from .distribution import TransformedNormalLoss
+from .distribution import TransformedNormalLoss, TransformedGmmLoss
 from .gp import GradientPenalty
 from .lstm import StackedLSTM, StackedLSTMCell
 from .made import MADE

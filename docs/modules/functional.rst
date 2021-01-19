@@ -24,11 +24,6 @@ Soft Round
 
 .. autofunction:: pyblaze.nn.functional.softround
 
-Log-Mean-Exp
-^^^^^^^^^^^^
-
-.. autofunction:: pyblaze.nn.functional.logmeanexp
-
 Probability Distributions
 -------------------------
 
