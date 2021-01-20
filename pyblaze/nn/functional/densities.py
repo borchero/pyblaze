@@ -73,6 +73,8 @@ def generate_random_gmm(num_components, dim, seed=None):
     torch.Tensor [N, D]
         The means of the GMM (number of components N, dimensionality D).
     """
-    generator = torch.Generator().manual_seed(seed)
+    generator = torch.Generator()
+    if seed is not None:
+        generator.manual_seed(seed)
     means = torch.randn(num_components, dim, generator=generator)
     return means
