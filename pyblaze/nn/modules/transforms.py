@@ -1,7 +1,7 @@
 import math
 import torch
 import torch.nn as nn
-import torch.nn.init as init
+import torch.nn.init as nninit
 import torch.nn.functional as F
 from .made import MADE
 
@@ -16,6 +16,8 @@ class _Transform(nn.Module):
         self.dim = dim
 
     def __repr__(self):
+        if self.dim is None:
+            return f'{self.__class__.__name__}()'
         return f'{self.__class__.__name__}(dim={self.dim})'
 
 #--------------------------------------------------------------------------------------------------
@@ -63,8 +65,8 @@ class AffineTransform(_Transform):
         """
         Resets this module's parameters. All parameters are sampled uniformly from [0, 1].
         """
-        init.uniform_(self.log_alpha)
-        init.uniform_(self.beta)
+        nninit.uniform_(self.log_alpha)
+        nninit.uniform_(self.beta)
 
     def forward(self, z):
         """
@@ -140,9 +142,9 @@ class PlanarTransform(_Transform):
         Resets this module's parameters. All parameters are sampled uniformly from [0, 1].
         """
         std = 1 / math.sqrt(self.u.size(0))
-        init.uniform_(self.u, -std, std)
-        init.uniform_(self.w, -std, std)
-        init.uniform_(self.bias, -std, std)
+        nninit.uniform_(self.u, -std, std)
+        nninit.uniform_(self.w, -std, std)
+        nninit.uniform_(self.bias, -std, std)
 
     def forward(self, z):
         """
@@ -230,9 +232,9 @@ class RadialTransform(_Transform):
         distribution.
         """
         std = 1 / math.sqrt(self.reference.size(0))
-        init.uniform_(self.reference, -std, std)
-        init.uniform_(self.alpha_prime, -std, std)
-        init.uniform_(self.beta_prime, -std, std)
+        nninit.uniform_(self.reference, -std, std)
+        nninit.uniform_(self.alpha_prime, -std, std)
+        nninit.uniform_(self.beta_prime, -std, std)
 
     def forward(self, z):
         """
@@ -485,8 +487,8 @@ class BatchNormTransform1d(_Transform):
         """
         Resets this module's parameters.
         """
-        init.zeros_(self.log_gamma) # equal to `init.ones_(self.gamma)`
-        init.zeros_(self.beta)
+        nninit.zeros_(self.log_gamma) # equal to `init.ones_(self.gamma)`
+        nninit.zeros_(self.beta)
 
     def forward(self, z):
         """
@@ -543,3 +545,120 @@ class BatchNormTransform1d(_Transform):
             log_det[rows] = float('-inf')
 
         return out, log_det
+
+#--------------------------------------------------------------------------------------------------
+
+class LeakyReLUTransform(_Transform):
+    """
+    LeakyReLU non-linearity to be used for Normalizing Flows.
+    """
+
+    def __init__(self, negative_slope=0.01):
+        """
+        Initializes a new LeakyReLU transform.
+
+        Parameters
+        ----------
+        negative_slope: float, default: 0.01
+            The multiplier for negative values.
+        """
+        super().__init__(None)
+        self.negative_slope = negative_slope
+        self.log_det_factor = math.log(self.negative_slope)
+
+    def forward(self, z):
+        """
+        Transforms the given input.
+
+        Parameters
+        ----------
+        z: torch.Tensor [N, D]
+            The given input (batch size N, dimensionality D).
+
+        Returns
+        -------
+        torch.Tensor [N, D]
+            The transformed input.
+        torch.Tensor [N]
+            The log-determinants of the Jacobian evaluated at z.
+        """
+        condition = z >= 0
+        out = torch.where(condition, z, self.negative_slope * z)
+
+        log_det_gte_0 = torch.zeros_like(z)
+        log_det_lt_0 = torch.ones_like(z) * self.log_det_factor
+        log_det_z = torch.where(condition, log_det_gte_0, log_det_lt_0)
+        log_det = log_det_z.sum(-1)
+
+        return out, log_det
+
+
+class PReLUTransform(_Transform):
+    """
+    Parametric ReLU non-linearity to be used for Normalizing Flows. Compared to the standard PReLU,
+    this implementation does not allow negative slopes.
+    """
+
+    def __init__(self, num_parameters=1, init=0.25, minimum=0.01):
+        """
+        Initializes a new parametric ReLU transform.
+
+        Parameters
+        ----------
+        num_parameters: int, default: 1
+            The number of parameters to use. Either 1 or the dimension of the normalizing flow.
+            In the latter case, there exists one alpha value per dimension.
+        init: float, default: 0.25
+            The initial value for the parameter(s). Must be positive.
+        minimum: float, default: 0.01
+            The minimum attainable alpha value. Must be positive.
+        """
+        assert init > 0, "initial value must be positive"
+        assert minimum > 0, "minimum value must be positive"
+
+        super().__init__(None)
+
+        self.init = init
+        self.minimum = minimum
+        self.weight_prime = nn.Parameter(torch.empty(num_parameters))
+
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        """
+        Resets this module's parameters.
+        """
+        nninit.constant_(self.weight_prime, self.init)
+
+    def forward(self, z):
+        """
+        Transforms the given input.
+
+        Parameters
+        ----------
+        z: torch.Tensor [N, D]
+            The given input (batch size N, dimensionality D).
+
+        Returns
+        -------
+        torch.Tensor [N, D]
+            The transformed input.
+        torch.Tensor [N]
+            The log-determinants of the Jacobian evaluated at z.
+        """
+        condition = z >= 0
+        weight = F.softplus(self.weight_prime) + self.minimum
+        out = torch.where(condition, z, weight * z)
+
+        log_det_gte_0 = torch.zeros_like(z)
+        log_det_lt_0 = torch.ones_like(z) * weight.log()
+        log_det_z = torch.where(condition, log_det_gte_0, log_det_lt_0)
+        log_det = log_det_z.sum(-1)
+
+        return out, log_det
+
+    def __repr__(self):
+        if self.weight_prime.numel() > 1:
+            return f'{self.__class__.__name__}(dim={self.weight_prime.numel()})'
+        alpha = F.softplus(self.weight_prime) + self.minimum
+        return f'{self.__class__.__name__}(alpha={alpha.item():.2f})'
