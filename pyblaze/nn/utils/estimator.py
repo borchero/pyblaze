@@ -1,5 +1,3 @@
-from pyblaze.utils.stdlib import cached_property
-
 class Estimator:
     """
     Estimators are meant to be mixins for PyTorch modules. They extend the module with three
@@ -18,25 +16,22 @@ class Estimator:
 
     Usually, the module does not implement these method itself, *unless training is tightly coupled
     with the model parameters*. An example might be a linear regression module. Normally, however,
-    the module is expected to provide an `__engine__` class that accepts the module as first
-    parameter (or alternatively overwrite the `engine` cached property). This engine class acts as
-    a default engine which is used whenever one of the methods is called. The arguments for the
+    the module is expected to implement the `engine` property-method. This engine class acts as
+    a default engine to which the methods delegate their implementation. The arguments for the
     functions therefore depend on the particular engine that is being used.
     """
 
-    @cached_property
+    @property
     def engine(self):
         """
-        Returns the engine for this model. The engine is cached after the first access to this
-        property. The class of the engine has to be given by `__engine__`.
+        Returns the engine for this model.
 
         Returns
         -------
         pyblaze.nn.BaseEngine
-            The `__engine__` class initialized with this model.
+            The engine class initialized with this model.
         """
-        # pylint: disable=no-member
-        return type(self).__engine__(self)
+        raise NotImplementedError
 
     def fit(self, *args, **kwargs):
         """
