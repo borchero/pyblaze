@@ -94,12 +94,11 @@ class Engine(TrainingCallback, PredictionCallback, ABC):
             training data). The keys for the metrics define their name.
         gpu: str or bool or int or list of int, default: 'auto'
             Governs, whether training and evaluation should be performed on a GPU. If set to True,
-            the GPU with the most amount of free memory is selected (if there are multiple GPUs).
-            If set to an integer, the GPU with the specified index is used. If set to a list of
-            integers, the specified GPUs are used to train and evaluate the model und multiple GPUs
-            simultaneously. In this case, the batch sizes of the data loaders should be adjusted
-            accordingly. If set to a string, the only valid value is 'auto'. In this case, all
-            available GPUs are used.
+            the first GPU is selected. If set to an integer, the GPU with the specified index is
+            used. If set to a list of integers, the specified GPUs are used to train and evaluate
+            the model und multiple GPUs simultaneously. In this case, the batch sizes of the data
+            loaders should be adjusted accordingly. If set to a string, the only valid value is
+            'auto'. In this case, all available GPUs are used.
         kwargs: keyword arguments
             Additional keyword arguments dependent on the specific subclass. If prefixed with
             'eval\_', it will be passed to :meth:`eval_batch` (without the prefix), otherwise to
