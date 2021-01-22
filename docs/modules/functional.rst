@@ -37,8 +37,6 @@ GMM
 
 .. autofunction:: pyblaze.nn.functional.log_prob_standard_gmm
 
-.. autofunction:: pyblaze.nn.functional.generate_random_gmm
-
 Metrics
 -------
 

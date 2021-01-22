@@ -52,29 +52,3 @@ def log_prob_standard_gmm(x, means):
     log_probs = -0.5 * (const + xx - 2 * xm + mm)
 
     return torch.logsumexp(log_probs - math.log(num_components), dim=1)
-
-
-def generate_random_gmm(num_components, dim, seed=None):
-    """
-    Generates the means of a GMM with the specified number of components. Each mean is sampled from
-    a standard normal distribution of the given dimension.
-
-    Parameters
-    ----------
-    num_components: int
-        The number of components in the GMM.
-    dim: int
-        The dimensionality of the GMM.
-    seed: int, default: None
-        The seed to use for randomly sampling the components.
-
-    Returns
-    -------
-    torch.Tensor [N, D]
-        The means of the GMM (number of components N, dimensionality D).
-    """
-    generator = torch.Generator()
-    if seed is not None:
-        generator.manual_seed(seed)
-    means = torch.randn(num_components, dim, generator=generator)
-    return means
