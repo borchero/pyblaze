@@ -58,7 +58,7 @@ class TransformedGmmLoss(nn.Module):
     :class:`TransformedNormalLoss`.
     """
 
-    def __init__(self, means, reduction='mean'):
+    def __init__(self, means, trainable=False, reduction='mean'):
         """
         Initializes a new GMM loss.
 
@@ -66,12 +66,17 @@ class TransformedGmmLoss(nn.Module):
         ----------
         means: torch.Tensor [N, D]
             The means of the GMM. For random initialization of the means, consider using
-            :meth:`pyblaze.nn.functional.random_gmm`. The means are not trainable.
+            :meth:`pyblaze.nn.functional.random_gmm`.
+        trainable: bool, default: False
+            Whether the means are trainable.
         reduction: str, default: 'mean'
             The kind of reduction to perform. Must be one of ['mean', 'sum', 'none'].
         """
         super().__init__()
-        self.register_buffer('means', means)
+        if trainable:
+            self.means = nn.Parameter(means)
+        else:
+            self.register_buffer('means', means)
         self.reduction = reduction
 
     def forward(self, z, log_det):
