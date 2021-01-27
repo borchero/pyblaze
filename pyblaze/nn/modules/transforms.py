@@ -421,6 +421,7 @@ class MaskedAutoregressiveTransform1d(_Transform):
         self.constrain_scale = constrain_scale
 
         self.net = MADE(dim, *hidden_dims, dim * 2, activation=activation, seed=seed)
+        self.bn = nn.BatchNorm1d(dim)
 
     def forward(self, x):
         """
@@ -442,8 +443,8 @@ class MaskedAutoregressiveTransform1d(_Transform):
         mean, logscale = self.net(x).chunk(2, dim=1)
         if self.constrain_scale:
             logscale = logscale.tanh()
-        z = x * logscale.exp() + mean
-        log_det = logscale.sum(-1)
+        z = (x - mean) * torch.exp(-logscale)
+        log_det = -logscale.sum(-1)
         return z, log_det
 
 #--------------------------------------------------------------------------------------------------
