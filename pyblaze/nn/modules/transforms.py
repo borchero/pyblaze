@@ -421,7 +421,6 @@ class MaskedAutoregressiveTransform1d(_Transform):
         self.constrain_scale = constrain_scale
 
         self.net = MADE(dim, *hidden_dims, dim * 2, activation=activation, seed=seed)
-        self.bn = nn.BatchNorm1d(dim)
 
     def forward(self, x):
         """
