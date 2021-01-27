@@ -305,7 +305,7 @@ class AffineCouplingTransform1d(_Transform):
     flag set alternately.
     """
 
-    def __init__(self, dim, fixed_dim, net, reverse=False, constrain_scale=False):
+    def __init__(self, dim, fixed_dim, net, constrain_scale=False):
         """
         Initializes a new affine coupling transformation.
 
@@ -322,8 +322,6 @@ class AffineCouplingTransform1d(_Transform):
             respectively, as a single tensor which will be split. In case this affine coupling is
             used with conditioning, the net's input dimension should be modified accordingly (batch
             size N, fixed dimension F).
-        reverse: bool, default: False
-            Whether to keep the second part fixed instead of the first one.
         constrain_scale: bool, default: False
             Whether to constrain the scale parameter that the output is multiplied by. This should
             be set for deep normalizing flows where no batch normalization is used.
@@ -334,9 +332,7 @@ class AffineCouplingTransform1d(_Transform):
             raise ValueError("fixed_dim must be smaller than dim")
 
         self.fixed_dim = fixed_dim
-        self.reverse = reverse
         self.constrain_scale = constrain_scale
-
         self.net = net
 
     def forward(self, z, condition=None):
@@ -359,10 +355,7 @@ class AffineCouplingTransform1d(_Transform):
         torch.Tensor [N]
             The log-determinants of the Jacobian evaluated at z.
         """
-        if self.reverse:
-            z2, z1 = z.split(self.fixed_dim, dim=-1)
-        else:
-            z1, z2 = z.split(self.fixed_dim, dim=-1)
+        z1, z2 = z.split(self.fixed_dim, dim=-1)
 
         if condition is None:
             x = z1
@@ -374,13 +367,8 @@ class AffineCouplingTransform1d(_Transform):
             logscale = logscale.tanh()
         transformed = z2 * logscale.exp() + mean
 
-        if self.reverse:
-            y = torch.cat([transformed, z1], dim=-1)
-        else:
-            y = torch.cat([z1, transformed], dim=-1)
-
+        y = torch.cat([z1, transformed], dim=-1)
         log_det = logscale.sum(-1)
-
         return y, log_det
 
 #--------------------------------------------------------------------------------------------------
@@ -392,8 +380,7 @@ class MaskedAutoregressiveTransform1d(_Transform):
     (Papamakarios et al., 2018).
     """
 
-    def __init__(self, dim, *hidden_dims, reverse=False, activation=nn.LeakyReLU(),
-                 constrain_scale=False, seed=0):
+    def __init__(self, dim, *hidden_dims, activation=nn.LeakyReLU(), constrain_scale=False):
         """
         Initializes a new MAF transform that is backed by a :class:`pyblaze.nn.MADE` model.
 
@@ -403,25 +390,16 @@ class MaskedAutoregressiveTransform1d(_Transform):
             The dimension of the inputs.
         hidden_dims: varargs of int
             The hidden dimensions of the MADE model.
-        reverse: bool, default: False
-            Whether to flip the input. Should be set alternately when stacking multiple MAF
-            transforms.
         activation: torch.nn.Module, default: torch.nn.LeakyReLU()
             The activation function to use in the MADE model.
         constrain_scale: bool, default: False
             Whether to constrain the scale parameter that the output is multiplied by. This should
             be set for deep normalizing flows where no batch normalization is used.
-        seed: int, default: 0
-            The seed to use for computing the MADE model's mask. Should be set to different values
-            if stacking multiple MAF transforms.
         """
         super().__init__(dim)
 
-        self.reverse = reverse
         self.constrain_scale = constrain_scale
-
-        self.net = MADE(dim, *hidden_dims, dim * 2, activation=activation, seed=seed)
-        self.bn = nn.BatchNorm1d(dim)
+        self.net = MADE(dim, *hidden_dims, dim * 2, activation=activation)
 
     def forward(self, x):
         """
@@ -439,11 +417,10 @@ class MaskedAutoregressiveTransform1d(_Transform):
         torch.Tensor [N]
             The log-determinants of the Jacobian evaluated at z.
         """
-        x = x.flip(-1) if self.reverse else x
         mean, logscale = self.net(x).chunk(2, dim=1)
         if self.constrain_scale:
             logscale = logscale.tanh()
-        z = (x - mean) * torch.exp(-logscale)
+        z = (x - mean) * torch.exp(-logscale.clamp(min=-30.0, max=30.0))
         log_det = -logscale.sum(-1)
         return z, log_det
 
@@ -662,3 +639,32 @@ class PReLUTransform(_Transform):
             return f'{self.__class__.__name__}(dim={self.weight_prime.numel()})'
         alpha = F.softplus(self.weight_prime) + self.minimum
         return f'{self.__class__.__name__}(alpha={alpha.item():.2f})'
+
+#--------------------------------------------------------------------------------------------------
+
+class FlipTransform1d(_Transform):
+    """
+    Simple transform to flip the input. Required for stacking coupling layers and masked
+    autoregressive transforms.
+    """
+
+    def __init__(self):
+        super().__init__(None)
+
+    def forward(self, z):
+        """
+        Flips the input along the second dimension.
+
+        Parameters
+        ----------
+        z: torch.Tensor [N, D]
+            The given input (batch size N, dimensionality D).
+
+        Returns
+        -------
+        torch.Tensor [N, D]
+            The flipped input.
+        torch.Tensor [N]
+            The log-determinants (zero).
+        """
+        return z.flip(-1), torch.zeros(z.size(0), dtype=z.dtype, device=z.device)
